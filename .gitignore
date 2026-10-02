@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.env
+cloudflared.exe
+cloudflared.EXE
+server.log
+public_url.txt
+tunnel_output.log
+*.url
+*.png
+test_*.py
+scratch/
+data/collab_rooms/*.json
+gura_cloud_deploy.zip
+*.mp4
+*.trk
+*.docx
