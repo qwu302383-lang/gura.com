@@ -949,11 +949,24 @@
               </div>
             </div>
 
-            <!-- 控制列：暫停/播放、下一首、清空隊列 -->
+            <!-- 控制列：暫停/播放、下一首、音量控制、清空隊列 -->
             <div class="music-controls-row">
-              <button type="button" id="musicPauseResumeBtn" class="music-ctrl-btn" title="暫停/繼續播放">⏸️ 暫停</button>
+              <button type="button" id="musicPauseResumeBtn" class="music-ctrl-btn primary-ctrl" title="暫停/繼續播放">⏸️ 暫停</button>
               <button type="button" id="musicNextBtn" class="music-ctrl-btn" title="切換下一首">⏭️ 下一首</button>
+              
+              <div class="music-volume-control">
+                <span id="musicVolIcon" class="music-vol-icon" title="切換靜音">🔊</span>
+                <input type="range" id="musicVolumeSlider" class="music-vol-slider" min="0" max="1" step="0.05" value="0.75" title="音量調整" />
+                <span id="musicVolValue" class="music-vol-value">75%</span>
+              </div>
+
               <button type="button" id="musicClearQueueBtn" class="music-ctrl-btn danger" title="清空排隊清單">🗑️ 清空隊列</button>
+            </div>
+
+            <!-- 音訊播放狀態提示與 Spotify 操作指引 -->
+            <div class="music-player-notice">
+              <span id="browserAudioStatus" class="audio-live-pill">🔊 網頁音樂正在播放</span>
+              <span class="spotify-guide-text">💡 提示：點擊上方 Spotify 播放器內的 ▶ 按鈕或【在 Spotify 開啟 ↗】即可享受高音質全曲！</span>
             </div>
           </div>
 

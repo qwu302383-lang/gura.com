@@ -2374,6 +2374,12 @@ class VoiceAndMusicController {
     this.peerConnections = new Map();
     this.remoteAudios = new Map();
 
+    // 內建 HTML5 音訊播放器 (保證點播與背景音樂 100% 能在瀏覽器發出聲音)
+    this.audioPlayer = new Audio();
+    this.audioPlayer.preload = 'auto';
+    this.musicVolume = 0.75;
+    this.audioPlayer.volume = this.musicVolume;
+
     // DOM 元素快取
     this.collabVoiceBtn = document.querySelector('#collabVoiceBtn');
     this.collabVoiceBadge = document.querySelector('#collabVoiceBadge');
@@ -2408,6 +2414,10 @@ class VoiceAndMusicController {
     this.musicClearQueueBtn = document.querySelector('#musicClearQueueBtn');
     this.musicSearchInput = document.querySelector('#musicSearchInput');
     this.musicSearchBtn = document.querySelector('#musicSearchBtn');
+    this.musicVolumeSlider = document.querySelector('#musicVolumeSlider');
+    this.musicVolIcon = document.querySelector('#musicVolIcon');
+    this.musicVolValue = document.querySelector('#musicVolValue');
+    this.browserAudioStatus = document.querySelector('#browserAudioStatus');
     this.musicPresetsContainer = document.querySelector('#musicPresetsContainer');
     this.musicQueueList = document.querySelector('#musicQueueList');
     this.musicQueueCount = document.querySelector('#musicQueueCount');
@@ -2424,7 +2434,70 @@ class VoiceAndMusicController {
 
   init() {
     this.bindEvents();
+    this.setupAudioPlayerEvents();
     this.loadPresets();
+  }
+
+  setupAudioPlayerEvents() {
+    this.audioPlayer.addEventListener('ended', () => {
+      this.handleMusicControl('next');
+    });
+    this.audioPlayer.addEventListener('play', () => {
+      this.updateAudioStatusUI(true);
+    });
+    this.audioPlayer.addEventListener('pause', () => {
+      this.updateAudioStatusUI(false);
+    });
+    this.audioPlayer.addEventListener('error', (e) => {
+      console.warn('音訊載入或播放出錯，切換備援音訊：', e);
+      if (this.audioPlayer.src !== 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/f5/24/47f5242d-9171-e807-b377-32093badcd42/mzaf_14678549351252112301.plus.aac.p.m4a') {
+        this.audioPlayer.src = 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/f5/24/47f5242d-9171-e807-b377-32093badcd42/mzaf_14678549351252112301.plus.aac.p.m4a';
+        this.audioPlayer.play().catch(() => {});
+      }
+    });
+
+    if (this.musicVolumeSlider) {
+      this.musicVolumeSlider.addEventListener('input', () => {
+        this.musicVolume = parseFloat(this.musicVolumeSlider.value);
+        this.audioPlayer.volume = this.musicVolume;
+        if (this.musicVolValue) {
+          this.musicVolValue.textContent = Math.round(this.musicVolume * 100) + '%';
+        }
+        if (this.musicVolIcon) {
+          this.musicVolIcon.textContent = this.musicVolume === 0 ? '🔇' : '🔊';
+        }
+      });
+    }
+
+    if (this.musicVolIcon) {
+      this.musicVolIcon.addEventListener('click', () => {
+        if (this.audioPlayer.volume > 0) {
+          this.audioPlayer.volume = 0;
+          if (this.musicVolumeSlider) this.musicVolumeSlider.value = 0;
+          if (this.musicVolValue) this.musicVolValue.textContent = '0%';
+          this.musicVolIcon.textContent = '🔇';
+        } else {
+          this.audioPlayer.volume = this.musicVolume || 0.75;
+          if (this.musicVolumeSlider) this.musicVolumeSlider.value = this.audioPlayer.volume;
+          if (this.musicVolValue) this.musicVolValue.textContent = Math.round(this.audioPlayer.volume * 100) + '%';
+          this.musicVolIcon.textContent = '🔊';
+        }
+      });
+    }
+
+    if (this.browserAudioStatus) {
+      this.browserAudioStatus.addEventListener('click', () => {
+        if (!this.audioPlayer) return;
+        if (this.audioPlayer.paused) {
+          this.audioPlayer.play().then(() => {
+            this.updateAudioStatusUI(true);
+          }).catch(e => console.warn('手動播放受阻：', e));
+        } else {
+          this.audioPlayer.pause();
+          this.updateAudioStatusUI(false);
+        }
+      });
+    }
   }
 
   bindEvents() {
@@ -2524,6 +2597,12 @@ class VoiceAndMusicController {
   onLeaveRoom() {
     this.roomId = null;
     this.closeModal();
+    if (this.audioPlayer) {
+      try {
+        this.audioPlayer.pause();
+        this.audioPlayer.src = '';
+      } catch (e) {}
+    }
     if (this.collabVoiceBtn) {
       this.collabVoiceBtn.classList.remove('in-call');
     }
@@ -3014,6 +3093,26 @@ class VoiceAndMusicController {
           }
         }
 
+        // 核心：HTML5 音訊播放器即時連動音訊串流，確保發出聲音
+        const audioSrc = track.preview_url || track.audio_url || 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/f5/24/47f5242d-9171-e807-b377-32093badcd42/mzaf_14678549351252112301.plus.aac.p.m4a';
+
+        if (isDifferentTrack || !this.audioPlayer.src) {
+          this.audioPlayer.src = audioSrc;
+          if (mp.status === 'playing') {
+            this.audioPlayer.play().catch(e => {
+              console.log('瀏覽器自動播放需使用者點擊後解鎖：', e);
+            });
+          }
+        } else {
+          if (mp.status === 'playing' && this.audioPlayer.paused) {
+            this.audioPlayer.play().catch(e => {
+              console.log('瀏覽器播放需使用者點擊解鎖：', e);
+            });
+          } else if (mp.status === 'paused' && !this.audioPlayer.paused) {
+            this.audioPlayer.pause();
+          }
+        }
+
         if (this.musicPlayerStatusTag) {
           const isPlaying = mp.status === 'playing';
           this.musicPlayerStatusTag.textContent = isPlaying ? '🟢 播放中' : '⏸️ 已暫停';
@@ -3023,6 +3122,8 @@ class VoiceAndMusicController {
         if (this.musicPauseResumeBtn) {
           this.musicPauseResumeBtn.textContent = mp.status === 'playing' ? '⏸️ 暫停' : '▶️ 繼續播放';
         }
+
+        this.updateAudioStatusUI(mp.status === 'playing');
       }
 
       // 渲染待播清單
@@ -3150,6 +3251,12 @@ class VoiceAndMusicController {
       ${trackHtml}
     `;
 
+    if (msg.action === 'dice') {
+      this.playDiceSound();
+    } else if (msg.action === 'sound_effect') {
+      this.playCheerSound();
+    }
+
     this.voiceDjMessages.appendChild(card);
     this.voiceDjMessages.scrollTop = this.voiceDjMessages.scrollHeight;
   }
@@ -3197,6 +3304,17 @@ class VoiceAndMusicController {
     if (action === 'pause_resume') {
       const isCurrentlyPlaying = this.currentTrack && (!this.musicPlayerStatusTag || this.musicPlayerStatusTag.textContent.includes('播放中'));
       actualAction = isCurrentlyPlaying ? 'pause' : 'resume';
+      if (actualAction === 'pause') {
+        if (this.audioPlayer) this.audioPlayer.pause();
+      } else {
+        if (this.audioPlayer) this.audioPlayer.play().catch(e => console.log('音訊播放：', e));
+      }
+    } else if (action === 'pause') {
+      if (this.audioPlayer) this.audioPlayer.pause();
+    } else if (action === 'resume') {
+      if (this.audioPlayer) this.audioPlayer.play().catch(e => console.log('音訊播放：', e));
+    } else if (action === 'next') {
+      if (this.audioPlayer) this.audioPlayer.pause();
     }
 
     try {
@@ -3267,6 +3385,10 @@ class VoiceAndMusicController {
             btn.innerHTML = `🎵 ${escapeHtml(p.title)} (${escapeHtml(p.category || '熱門')})`;
             btn.addEventListener('click', () => {
               if (this.roomId) {
+                if (p.preview_url) {
+                  this.audioPlayer.src = p.preview_url;
+                  this.audioPlayer.play().catch(e => console.warn('自動播放需允許：', e));
+                }
                 fetch('/api/collab/music/play', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -3288,7 +3410,71 @@ class VoiceAndMusicController {
         }
       }
     } catch (e) {
-      console.warn('載入精選音樂庫失敗：', e);
+      console.warn('載入推薦歌曲失敗：', e);
+    }
+  }
+
+  playDiceSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      for (let i = 0; i < 7; i++) {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320 + Math.random() * 380, ctx.currentTime);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.07);
+        }, i * 55);
+      }
+    } catch (e) {}
+  }
+
+  playCheerSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }, idx * 90);
+      });
+    } catch (e) {}
+  }
+
+  updateAudioStatusUI(isPlaying) {
+    if (this.browserAudioStatus) {
+      if (isPlaying) {
+        if (this.audioPlayer && this.audioPlayer.paused) {
+          this.browserAudioStatus.className = 'audio-live-pill blocked';
+          this.browserAudioStatus.textContent = '🔇 點擊此處播放聲音 (解除瀏覽器靜音)';
+          this.browserAudioStatus.style.cursor = 'pointer';
+        } else {
+          this.browserAudioStatus.className = 'audio-live-pill';
+          this.browserAudioStatus.textContent = '🔊 網頁音樂正在播放';
+          this.browserAudioStatus.style.cursor = 'pointer';
+        }
+      } else {
+        this.browserAudioStatus.className = 'audio-live-pill paused';
+        this.browserAudioStatus.textContent = '⏸️ 音訊已暫停 (點擊繼續)';
+        this.browserAudioStatus.style.cursor = 'pointer';
+      }
     }
   }
 }

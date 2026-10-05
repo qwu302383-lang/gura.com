@@ -3223,8 +3223,9 @@ button { cursor: pointer; }
 
 .music-controls-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .music-ctrl-btn {
@@ -3244,6 +3245,16 @@ button { cursor: pointer; }
   border-color: #94a3b8;
 }
 
+.music-ctrl-btn.primary-ctrl {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.music-ctrl-btn.primary-ctrl:hover {
+  background: #059669;
+}
+
 .music-ctrl-btn.danger {
   color: #ef4444;
   border-color: #fca5a5;
@@ -3252,6 +3263,86 @@ button { cursor: pointer; }
 
 .music-ctrl-btn.danger:hover {
   background: #fee2e2;
+}
+
+/* 音量控制拉桿 */
+.music-volume-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.music-vol-icon {
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.music-vol-slider {
+  width: 75px;
+  accent-color: #10b981;
+  cursor: pointer;
+  height: 4px;
+}
+
+.music-vol-value {
+  font-size: 11px;
+  color: #64748b;
+  min-width: 28px;
+  text-align: right;
+  font-family: monospace;
+}
+
+/* 播放狀態與操作提示 */
+.music-player-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.audio-live-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.audio-live-pill.paused {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.audio-live-pill.blocked {
+  color: #b91c1c;
+  background: #fee2e2;
+  cursor: pointer;
+  border: 1px dashed #ef4444;
+  animation: pulse-audio-blocked 1.5s infinite;
+}
+
+@keyframes pulse-audio-blocked {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.spotify-guide-text {
+  font-size: 11.5px;
+  color: #64748b;
 }
 
 .music-request-section {

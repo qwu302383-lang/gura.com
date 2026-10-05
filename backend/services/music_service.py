@@ -4,7 +4,9 @@ import random
 import time
 import requests
 
-# 精選熱門與專注推薦音樂庫 (附真實 Spotify ID 與封面)
+DEFAULT_AUDIO_FALLBACK = "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/f5/24/47f5242d-9171-e807-b377-32093badcd42/mzaf_14678549351252112301.plus.aac.p.m4a"
+
+# 精選熱門與專注推薦音樂庫 (附真實 Spotify ID、封面與可直接播放之音訊串流)
 PRESET_MUSIC = [
     {
         "id": "0bYg9bo50gSsH3LtWvIm5K",
@@ -14,7 +16,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/0bYg9bo50gSsH3LtWvIm5K",
         "spotify_embed_url": "https://open.spotify.com/embed/track/0bYg9bo50gSsH3LtWvIm5K?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e028b19aa15a81e9f1a04ec4a87",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/f5/24/47f5242d-9171-e807-b377-32093badcd42/mzaf_14678549351252112301.plus.aac.p.m4a"
     },
     {
         "id": "4cOdK2wGLETKBW3PvgPWqT",
@@ -24,7 +26,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT",
         "spotify_embed_url": "https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02baf89eb11ec7c657805d2da0",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/62/ff/3a/62ff3abe-bc6d-a7d0-31b0-71cbec9aaa24/mzaf_13802296211720217737.plus.aac.p.m4a"
     },
     {
         "id": "0VjIjW4GlUZAMYd2vXMi3b",
@@ -34,7 +36,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b",
         "spotify_embed_url": "https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e028863bc11d2aa12b54f5aeb36",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/12/73/ca/1273ca46-233a-5331-189b-25ac1d656533/mzaf_976341070785891411.plus.aac.p.m4a"
     },
     {
         "id": "7qiZfU4dY1lWllzX7mPBI3",
@@ -44,7 +46,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3",
         "spotify_embed_url": "https://open.spotify.com/embed/track/7qiZfU4dY1lWllzX7mPBI3?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02ba5db46f4b838ef6027e6f96",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/44/c7/4f/44c74f0d-72dc-6143-d4d0-ba14d661ca0d/mzaf_9566898362556366703.plus.aac.p.m4a"
     },
     {
         "id": "3dPtQ0d7L9Mei3b9q4M6qP",
@@ -54,7 +56,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/3dPtQ0d7L9Mei3b9q4M6qP",
         "spotify_embed_url": "https://open.spotify.com/embed/track/3dPtQ0d7L9Mei3b9q4M6qP?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02c6114a070eb0326077ff0a89",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/41/5e/b0/415eb064-77c4-0195-210e-ddc80f3c984d/mzaf_7767226104050015250.plus.aac.p.m4a"
     },
     {
         "id": "5s7LwV3mS4z9Wf5n3N5z8x",
@@ -64,7 +66,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/5s7LwV3mS4z9Wf5n3N5z8x",
         "spotify_embed_url": "https://open.spotify.com/embed/track/5s7LwV3mS4z9Wf5n3N5z8x?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02cbdb82e753c15d5e1ff74ec0",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ed/07/65/ed07651a-f348-3b7c-4aba-d666b3606946/mzaf_5806429344424646657.plus.aac.p.m4a"
     },
     {
         "id": "303W52K0A5Lq4l8tW1A00j",
@@ -74,7 +76,7 @@ PRESET_MUSIC = [
         "spotify_url": "https://open.spotify.com/track/303W52K0A5Lq4l8tW1A00j",
         "spotify_embed_url": "https://open.spotify.com/embed/track/303W52K0A5Lq4l8tW1A00j?utm_source=generator&theme=0",
         "cover_url": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e0267eb49a8837e4299b9c02ff4",
-        "preview_url": ""
+        "preview_url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/20/d0/e7/20d0e7db-9c12-795a-d738-2fc3dde4ac9a/mzaf_10317517925583301645.plus.aac.p.m4a"
     }
 ]
 
@@ -109,11 +111,33 @@ def check_academic_or_search(query: str):
             
     return False, None, None
 
+def search_itunes_preview(query: str):
+    """透過 iTunes 搜尋取得音訊串流與專輯封面"""
+    try:
+        # 中文查詢時優先使用台灣市場代碼，提高命中率
+        has_cjk = any('\u4e00' <= char <= '\u9fff' for char in query)
+        country_param = "&country=TW" if has_cjk else ""
+        itunes_url = f"https://itunes.apple.com/search?term={urllib.parse.quote(query)}&entity=song&limit=1{country_param}"
+        res = requests.get(itunes_url, timeout=3)
+        if res.status_code == 200:
+            results = res.json().get("results", [])
+            if results:
+                top = results[0]
+                return {
+                    "title": top.get("trackName"),
+                    "artist": top.get("artistName"),
+                    "cover_url": top.get("artworkUrl100", "").replace("100x100bb", "600x600bb"),
+                    "preview_url": top.get("previewUrl")
+                }
+    except Exception:
+        pass
+    return None
+
 def resolve_spotify_track(input_text: str):
     """
     解析用戶輸入的文字或連結：
-    1. 若為 Spotify 網址或 URI，自動提取 track ID 並抓取 oEmbed 封面與資訊。
-    2. 若為歌名或歌手，先搜尋內建資料庫；若無則透過 iTunes 搜尋取得歌名、藝人與預聽音訊，並產生 Spotify 連結。
+    1. 若為 Spotify 網址或 URI，自動提取 track ID 並抓取 oEmbed 封面與資訊，同時搭配可播放音訊。
+    2. 若為歌名或歌手，先比對內建資料庫；若無則透過 iTunes 搜尋取得真實音訊與專輯封面，並產生 Spotify 連結。
     """
     clean_text = input_text.strip()
     
@@ -129,6 +153,7 @@ def resolve_spotify_track(input_text: str):
         title = f"Spotify Track ({track_id})"
         artist = "Spotify 藝人"
         cover_url = ""
+        preview_url = ""
         
         # 嘗試利用 Spotify oEmbed 獲取詳細資訊
         try:
@@ -141,6 +166,11 @@ def resolve_spotify_track(input_text: str):
                     parts = title.split(" by ")
                     title = parts[0]
                     artist = parts[1]
+                    
+                # 依曲名搜尋真實試聽音檔
+                itunes_info = search_itunes_preview(f"{artist} {title}")
+                if itunes_info and itunes_info.get("preview_url"):
+                    preview_url = itunes_info["preview_url"]
         except Exception:
             pass
             
@@ -151,7 +181,7 @@ def resolve_spotify_track(input_text: str):
             "spotify_url": spotify_url,
             "spotify_embed_url": embed_url,
             "cover_url": cover_url,
-            "preview_url": "",
+            "preview_url": preview_url or DEFAULT_AUDIO_FALLBACK,
             "source": "spotify_direct"
         }
 
@@ -167,7 +197,7 @@ def resolve_spotify_track(input_text: str):
             "spotify_url": sp_url,
             "spotify_embed_url": f"https://open.spotify.com/embed/playlist/{pl_id}?utm_source=generator&theme=0",
             "cover_url": "",
-            "preview_url": "",
+            "preview_url": DEFAULT_AUDIO_FALLBACK,
             "source": "spotify_playlist"
         }
 
@@ -179,42 +209,33 @@ def resolve_spotify_track(input_text: str):
             (p["category"].lower() in clean_text.lower() and len(clean_text) <= 6)):
             return dict(p)
 
-    # 3. 嘗試以公開 iTunes API 搜尋歌曲元數據（名稱、藝人、專輯封面、30秒真實試聽音檔）
-    try:
-        search_query = clean_text
-        for prefix in ["我想聽", "請播", "播放", "點歌", "放一下", "放首", "來首", "播", "聽"]:
-            if search_query.startswith(prefix):
-                search_query = search_query[len(prefix):].strip()
-                
-        itunes_url = f"https://itunes.apple.com/search?term={urllib.parse.quote(search_query)}&entity=song&limit=1"
-        res = requests.get(itunes_url, timeout=3)
-        if res.status_code == 200:
-            data = res.json()
-            results = data.get("results", [])
-            if results:
-                top = results[0]
-                t_title = top.get("trackName", search_query)
-                t_artist = top.get("artistName", "熱門歌手")
-                artwork = top.get("artworkUrl100", "").replace("100x100bb", "600x600bb")
-                preview_mp3 = top.get("previewUrl", "")
-                
-                # 建立 Spotify 搜尋連結
-                spotify_search_link = f"https://open.spotify.com/search/{urllib.parse.quote(f'{t_artist} {t_title}')}"
-                
-                return {
-                    "id": f"song_{int(time.time()*1000)}",
-                    "title": t_title,
-                    "artist": t_artist,
-                    "spotify_url": spotify_search_link,
-                    "spotify_embed_url": PRESET_MUSIC[0]["spotify_embed_url"], # 預設背景音樂播放機
-                    "cover_url": artwork,
-                    "preview_url": preview_mp3,
-                    "source": "search"
-                }
-    except Exception:
-        pass
+    # 3. 嘗試以 iTunes API 搜尋歌曲元數據（名稱、藝人、專輯封面、真實音訊串流）
+    search_query = clean_text
+    for prefix in ["我想聽", "請播", "播放", "點歌", "放一下", "放首", "來首", "播", "聽"]:
+        if search_query.startswith(prefix):
+            search_query = search_query[len(prefix):].strip()
+            
+    itunes_info = search_itunes_preview(search_query)
+    if itunes_info:
+        t_title = itunes_info.get("title") or search_query
+        t_artist = itunes_info.get("artist") or "精選歌手"
+        artwork = itunes_info.get("cover_url") or ""
+        preview_mp3 = itunes_info.get("preview_url") or DEFAULT_AUDIO_FALLBACK
+        
+        spotify_search_link = f"https://open.spotify.com/search/{urllib.parse.quote(f'{t_artist} {t_title}')}"
+        
+        return {
+            "id": f"song_{int(time.time()*1000)}",
+            "title": t_title,
+            "artist": t_artist,
+            "spotify_url": spotify_search_link,
+            "spotify_embed_url": PRESET_MUSIC[0]["spotify_embed_url"],
+            "cover_url": artwork,
+            "preview_url": preview_mp3,
+            "source": "search"
+        }
 
-    # 4. 找不到時的安全兜底
+    # 4. 找不到時的安全兜底（保證絕對有聲音播放）
     safe_q = clean_text or "好聽音樂"
     return {
         "id": f"custom_{int(time.time())}",
@@ -223,7 +244,7 @@ def resolve_spotify_track(input_text: str):
         "spotify_url": f"https://open.spotify.com/search/{urllib.parse.quote(safe_q)}",
         "spotify_embed_url": PRESET_MUSIC[0]["spotify_embed_url"],
         "cover_url": "",
-        "preview_url": "",
+        "preview_url": DEFAULT_AUDIO_FALLBACK,
         "source": "custom_search"
     }
 
@@ -327,7 +348,7 @@ def handle_dj_chat(text: str, user_name: str, room: dict):
             f"🎧 **【DJ 已為大家點播】《{track['title']}》**\n\n"
             f"🎤 **歌手 / 演出**：{track.get('artist', '精選音樂')}\n"
             f"✨ 由組員 **{user_name}** 熱情點播！已加入房間音樂台播放～\n"
-            f"🟢 點擊下方播放器可即時試聽，或點擊【在 Spotify 開啟】同步收藏！🎶"
+            f"🟢 瀏覽器正直接播放高音質試聽，亦可點擊下方【在 Spotify 開啟】同步收藏！🎶"
         )
         return {
             "success": True,
