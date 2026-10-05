@@ -1,12 +1,21 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 title 設定 Gura 開機自動啟動
 echo ========================================================
 echo   ⚙️ 正在啟用 Gura 開機自動於背景啟動...
 echo ========================================================
 echo.
+
+if exist "%~dp0run_server.py" (
+    set "SOURCE_DIR=%~dp0"
+) else if exist "%~dp0吳奕璿的\run_server.py" (
+    set "SOURCE_DIR=%~dp0吳奕璿的\"
+) else (
+    set "SOURCE_DIR=C:\Users\ella2\OneDrive\桌面\吳奕璿的\"
+)
+
 set "STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-copy /y "%~dp0啟動 Gura 伺服器.vbs" "%STARTUP_DIR%\Gura_AutoStart.vbs" >nul
+copy /y "%SOURCE_DIR%啟動 Gura 伺服器.vbs" "%STARTUP_DIR%\Gura_AutoStart.vbs" >nul
 echo [OK] 已成功加入 Windows 開機啟動！
 echo.
 echo 說明：

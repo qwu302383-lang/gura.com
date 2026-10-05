@@ -1,11 +1,18 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 title Gura AI 智慧助理 - 啟動器
 echo ========================================================
 echo   🚀 正在啟動 Gura AI 智慧助理伺服器...
 echo ========================================================
 echo.
-cd /d "%~dp0"
+
+if exist "%~dp0run_server.py" (
+    cd /d "%~dp0"
+) else if exist "%~dp0吳奕璿的\run_server.py" (
+    cd /d "%~dp0吳奕璿的"
+) else (
+    cd /d "C:\Users\ella2\OneDrive\桌面\吳奕璿的"
+)
 
 echo [1/3] 正在檢查後台進程狀態...
 netstat -ano | findstr :5000 >nul 2>&1
@@ -13,7 +20,7 @@ if %errorlevel% equ 0 (
     echo [OK] 伺服器已經在背景運行中！
 ) else (
     echo [2/3] 正在背景啟動伺服器與穿透隧道...
-    start "" "C:\Users\ella2\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe" run_server.py --open-browser
+    start "" "C:\Users\ella2\AppData\Local\Python\pythoncore-3.14-64\python.exe" run_server.py --open-browser
     timeout /t 3 >nul
 )
 
