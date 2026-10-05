@@ -33,13 +33,18 @@ def ensure_room_defaults(room: dict):
 
     if "music_player" not in room or not isinstance(room["music_player"], dict):
         room["music_player"] = {
-            "current_track": PRESET_MUSIC[0],
-            "status": "playing",
+            "current_track": None,
+            "status": "idle",
             "queue": [],
             "history": [],
-            "started_at": now,
+            "started_at": 0,
             "volume": 80
         }
+    else:
+        # 若當前未在播放具體點播歌曲，維持待機靜音，點進 DJ 時不主動播放
+        if not room["music_player"].get("current_track"):
+            room["music_player"]["status"] = "idle"
+            room["music_player"]["current_track"] = None
 
     if "voice_messages" not in room or not isinstance(room["voice_messages"], list):
         room["voice_messages"] = [
@@ -48,7 +53,7 @@ def ensure_room_defaults(room: dict):
                 "user_id": "dj_bot",
                 "user_name": "小白鯊 DJ 🎧",
                 "role": "assistant",
-                "text": "🎧 歡迎來到通話頻道！我是專屬音樂 DJ 小白鯊！我不負責課業解題與資料搜尋喔，專門為大家播歌放鬆與熱鬧氣氛～想聽什麼音樂隨時跟我說！🎶",
+                "text": "🎧 歡迎來到通話頻道！我是專屬音樂 DJ 小白鯊！我不負責課業解題與資料搜尋喔～目前尚未播放音樂，請在下方輸入欄輸入想聽的歌名（例如：「我想聽 晴天」或貼上 Spotify 連結），我立刻為大家播歌！🎶",
                 "timestamp": now,
                 "is_dj": True
             }

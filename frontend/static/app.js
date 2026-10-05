@@ -2404,6 +2404,7 @@ class VoiceAndMusicController {
     this.voiceMusicTab = document.querySelector('#voiceMusicTab');
     this.voiceDjTab = document.querySelector('#voiceDjTab');
     this.spotifyEmbedIframe = document.querySelector('#spotifyEmbedIframe');
+    this.spotifyStandbyCard = document.querySelector('#spotifyStandbyCard');
     this.nowPlayingTitle = document.querySelector('#nowPlayingTitle');
     this.nowPlayingArtist = document.querySelector('#nowPlayingArtist');
     this.nowPlayingRequester = document.querySelector('#nowPlayingRequester');
@@ -3071,18 +3072,26 @@ class VoiceAndMusicController {
       const mp = data.music_player;
       const track = mp.current_track;
 
-      if (track) {
+      if (track && mp.status === 'playing') {
         const isDifferentTrack = !this.currentTrack || this.currentTrack.id !== track.id;
         this.currentTrack = track;
 
-        if (isDifferentTrack) {
-          if (this.spotifyEmbedIframe && track.spotify_embed_url) {
+        if (this.spotifyStandbyCard) {
+          this.spotifyStandbyCard.style.display = 'none';
+        }
+        if (this.spotifyEmbedIframe) {
+          this.spotifyEmbedIframe.style.display = 'block';
+          if (track.spotify_embed_url && this.spotifyEmbedIframe.src !== track.spotify_embed_url) {
             this.spotifyEmbedIframe.src = track.spotify_embed_url;
           }
+        }
+
+        if (isDifferentTrack) {
           if (this.nowPlayingTitle) this.nowPlayingTitle.textContent = track.title || '精選音樂';
           if (this.nowPlayingArtist) this.nowPlayingArtist.textContent = track.artist || 'Spotify 藝人';
           if (this.nowPlayingRequester) this.nowPlayingRequester.textContent = `（由 ${track.requested_by || 'DJ'} 點播）`;
           if (this.openInSpotifyBtn) {
+            this.openInSpotifyBtn.style.display = 'inline-flex';
             this.openInSpotifyBtn.href = track.spotify_url || `https://open.spotify.com/track/${track.id}`;
           }
           if (this.voiceMiniTrack) {
@@ -3098,32 +3107,79 @@ class VoiceAndMusicController {
 
         if (isDifferentTrack || !this.audioPlayer.src) {
           this.audioPlayer.src = audioSrc;
-          if (mp.status === 'playing') {
-            this.audioPlayer.play().catch(e => {
-              console.log('瀏覽器自動播放需使用者點擊後解鎖：', e);
-            });
-          }
+          this.audioPlayer.play().catch(e => {
+            console.log('瀏覽器自動播放需使用者點擊後解鎖：', e);
+            this.updateAudioStatusUI(true);
+          });
         } else {
-          if (mp.status === 'playing' && this.audioPlayer.paused) {
+          if (this.audioPlayer.paused) {
             this.audioPlayer.play().catch(e => {
               console.log('瀏覽器播放需使用者點擊解鎖：', e);
+              this.updateAudioStatusUI(true);
             });
-          } else if (mp.status === 'paused' && !this.audioPlayer.paused) {
-            this.audioPlayer.pause();
           }
         }
 
         if (this.musicPlayerStatusTag) {
-          const isPlaying = mp.status === 'playing';
-          this.musicPlayerStatusTag.textContent = isPlaying ? '🟢 播放中' : '⏸️ 已暫停';
-          this.musicPlayerStatusTag.style.color = isPlaying ? '#10b981' : '#f59e0b';
+          this.musicPlayerStatusTag.textContent = '🟢 播放中';
+          this.musicPlayerStatusTag.style.color = '#10b981';
         }
 
         if (this.musicPauseResumeBtn) {
-          this.musicPauseResumeBtn.textContent = mp.status === 'playing' ? '⏸️ 暫停' : '▶️ 繼續播放';
+          this.musicPauseResumeBtn.textContent = '⏸️ 暫停';
         }
 
-        this.updateAudioStatusUI(mp.status === 'playing');
+        this.updateAudioStatusUI(true);
+
+      } else if (track && mp.status === 'paused') {
+        this.currentTrack = track;
+        if (this.audioPlayer && !this.audioPlayer.paused) {
+          this.audioPlayer.pause();
+        }
+        if (this.musicPlayerStatusTag) {
+          this.musicPlayerStatusTag.textContent = '⏸️ 已暫停';
+          this.musicPlayerStatusTag.style.color = '#f59e0b';
+        }
+        if (this.musicPauseResumeBtn) {
+          this.musicPauseResumeBtn.textContent = '▶️ 繼續播放';
+        }
+        this.updateAudioStatusUI(false);
+
+      } else {
+        // 點進 DJ 時不播放音樂！處於待機靜音狀態，直到在輸入欄輸入歌曲才出現聲音
+        this.currentTrack = null;
+        if (this.audioPlayer) {
+          this.audioPlayer.pause();
+          this.audioPlayer.removeAttribute('src');
+        }
+        if (this.spotifyEmbedIframe) {
+          this.spotifyEmbedIframe.style.display = 'none';
+        }
+        if (this.spotifyStandbyCard) {
+          this.spotifyStandbyCard.style.display = 'flex';
+        }
+        if (this.nowPlayingTitle) this.nowPlayingTitle.textContent = '等待點播音樂中...';
+        if (this.nowPlayingArtist) this.nowPlayingArtist.textContent = '請在下方輸入欄輸入想聽的歌曲或貼上 Spotify 連結';
+        if (this.nowPlayingRequester) this.nowPlayingRequester.textContent = '';
+        if (this.openInSpotifyBtn) this.openInSpotifyBtn.style.display = 'none';
+        if (this.voiceMiniTrack) {
+          this.voiceMiniTrack.textContent = '🎵 待播中';
+        }
+        if (this.collabDjPlayingDot) {
+          this.collabDjPlayingDot.style.display = 'none';
+        }
+        if (this.musicPlayerStatusTag) {
+          this.musicPlayerStatusTag.textContent = '⚪ 待機中';
+          this.musicPlayerStatusTag.style.color = '#94a3b8';
+        }
+        if (this.musicPauseResumeBtn) {
+          this.musicPauseResumeBtn.textContent = '▶️ 播放';
+        }
+        if (this.browserAudioStatus) {
+          this.browserAudioStatus.className = 'audio-live-pill idle';
+          this.browserAudioStatus.textContent = '⚪ 音訊待命中（輸入歌名後自動播放）';
+          this.browserAudioStatus.style.cursor = 'default';
+        }
       }
 
       // 渲染待播清單
@@ -3287,6 +3343,10 @@ class VoiceAndMusicController {
       const data = await res.json();
       if (res.ok && data.success) {
         if (this.musicSearchInput) this.musicSearchInput.value = '';
+        if (data.current_track && data.current_track.preview_url) {
+          this.audioPlayer.src = data.current_track.preview_url;
+          this.audioPlayer.play().catch(e => console.log('播放需解鎖：', e));
+        }
         if (collabController) collabController.pollSync();
       } else {
         alert('點播失敗：' + (data.error || '無法解析歌曲'));
@@ -3302,7 +3362,17 @@ class VoiceAndMusicController {
     if (!this.roomId) return;
     let actualAction = action;
     if (action === 'pause_resume') {
-      const isCurrentlyPlaying = this.currentTrack && (!this.musicPlayerStatusTag || this.musicPlayerStatusTag.textContent.includes('播放中'));
+      if (!this.currentTrack) {
+        alert('目前尚未點播歌曲，請在下方輸入欄輸入想聽的歌名！');
+        if (this.musicSearchInput) this.musicSearchInput.focus();
+        return;
+      }
+      const isCurrentlyPlaying = (!this.musicPlayerStatusTag || this.musicPlayerStatusTag.textContent.includes('播放中'));
+      // 如果音訊播放器因瀏覽器限制處於暫停，但狀態是播放中，使用者點擊暫停/播放時直接嘗試播放解鎖
+      if (isCurrentlyPlaying && this.audioPlayer && this.audioPlayer.paused) {
+        this.audioPlayer.play().catch(e => console.log('音訊播放：', e));
+        return;
+      }
       actualAction = isCurrentlyPlaying ? 'pause' : 'resume';
       if (actualAction === 'pause') {
         if (this.audioPlayer) this.audioPlayer.pause();
@@ -3361,6 +3431,12 @@ class VoiceAndMusicController {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        if (data.action === 'play' && data.track && data.track.preview_url) {
+          this.audioPlayer.src = data.track.preview_url;
+          this.audioPlayer.play().catch(e => {
+            console.log('播放需使用者點擊解鎖：', e);
+          });
+        }
         if (collabController) collabController.pollSync();
       } else {
         alert('發送訊息失敗：' + (data.error || '請重試'));
@@ -3470,10 +3546,14 @@ class VoiceAndMusicController {
           this.browserAudioStatus.textContent = '🔊 網頁音樂正在播放';
           this.browserAudioStatus.style.cursor = 'pointer';
         }
-      } else {
+      } else if (this.currentTrack) {
         this.browserAudioStatus.className = 'audio-live-pill paused';
         this.browserAudioStatus.textContent = '⏸️ 音訊已暫停 (點擊繼續)';
         this.browserAudioStatus.style.cursor = 'pointer';
+      } else {
+        this.browserAudioStatus.className = 'audio-live-pill idle';
+        this.browserAudioStatus.textContent = '⚪ 音訊待命中（輸入歌名後自動播放）';
+        this.browserAudioStatus.style.cursor = 'default';
       }
     }
   }

@@ -921,28 +921,33 @@
           <div class="now-playing-card">
             <div class="now-playing-header">
               <span class="now-playing-tag">NOW PLAYING</span>
-              <span id="musicPlayerStatusTag" class="music-player-status">🟢 播放中</span>
+              <span id="musicPlayerStatusTag" class="music-player-status" style="color: #94a3b8;">⚪ 待機中</span>
             </div>
             
             <!-- Spotify 官方 Embed 播放器容器 -->
             <div class="spotify-embed-container">
               <iframe id="spotifyEmbedIframe" class="spotify-embed-iframe"
-                src="https://open.spotify.com/embed/track/0bYg9bo50gSsH3LtWvIm5K?utm_source=generator&theme=0"
+                src=""
+                style="display: none;"
                 width="100%" height="152" frameBorder="0" allowfullscreen=""
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy">
               </iframe>
+              <div id="spotifyStandbyCard" class="spotify-standby-placeholder">
+                <span class="standby-icon">🎧</span>
+                <span class="standby-text">DJ 目前待命中，請在下方輸入欄輸入歌名或貼上連結開始播放</span>
+              </div>
             </div>
 
             <!-- 曲目資訊與外部跳轉 -->
             <div class="now-playing-details">
               <div class="now-playing-meta">
-                <strong id="nowPlayingTitle" class="now-playing-title">Lofi Hip Hop - 讀書專注音樂</strong>
-                <span id="nowPlayingArtist" class="now-playing-artist">Lofi Fruits Music</span>
-                <span id="nowPlayingRequester" class="now-playing-requester">（由 小白鯊 DJ 推薦）</span>
+                <strong id="nowPlayingTitle" class="now-playing-title">等待點播音樂中...</strong>
+                <span id="nowPlayingArtist" class="now-playing-artist">請在下方輸入想聽的歌曲或貼上 Spotify 連結</span>
+                <span id="nowPlayingRequester" class="now-playing-requester"></span>
               </div>
               <div class="now-playing-external">
-                <a id="openInSpotifyBtn" href="https://open.spotify.com/track/0bYg9bo50gSsH3LtWvIm5K" target="_blank" rel="noopener noreferrer" class="spotify-external-link">
+                <a id="openInSpotifyBtn" href="#" target="_blank" rel="noopener noreferrer" class="spotify-external-link" style="display: none;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="#1ed760"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
                   <span>在 Spotify 開啟 ↗</span>
                 </a>
@@ -951,7 +956,7 @@
 
             <!-- 控制列：暫停/播放、下一首、音量控制、清空隊列 -->
             <div class="music-controls-row">
-              <button type="button" id="musicPauseResumeBtn" class="music-ctrl-btn primary-ctrl" title="暫停/繼續播放">⏸️ 暫停</button>
+              <button type="button" id="musicPauseResumeBtn" class="music-ctrl-btn primary-ctrl" title="暫停/繼續播放">▶️ 播放</button>
               <button type="button" id="musicNextBtn" class="music-ctrl-btn" title="切換下一首">⏭️ 下一首</button>
               
               <div class="music-volume-control">
@@ -965,8 +970,8 @@
 
             <!-- 音訊播放狀態提示與 Spotify 操作指引 -->
             <div class="music-player-notice">
-              <span id="browserAudioStatus" class="audio-live-pill">🔊 網頁音樂正在播放</span>
-              <span class="spotify-guide-text">💡 提示：點擊上方 Spotify 播放器內的 ▶ 按鈕或【在 Spotify 開啟 ↗】即可享受高音質全曲！</span>
+              <span id="browserAudioStatus" class="audio-live-pill idle">⚪ 音訊待命中（輸入歌名後自動播放）</span>
+              <span class="spotify-guide-text">💡 提示：在下方輸入歌曲名稱，DJ 就會立即為大家播放音樂！</span>
             </div>
           </div>
 

@@ -3327,12 +3327,39 @@ button { cursor: pointer; }
   background: #fef3c7;
 }
 
+.audio-live-pill.idle {
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
 .audio-live-pill.blocked {
   color: #b91c1c;
   background: #fee2e2;
   cursor: pointer;
   border: 1px dashed #ef4444;
   animation: pulse-audio-blocked 1.5s infinite;
+}
+
+.spotify-standby-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 32px 16px;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: center;
+  box-sizing: border-box;
+  min-height: 120px;
+}
+
+.spotify-standby-placeholder .standby-icon {
+  font-size: 26px;
 }
 
 @keyframes pulse-audio-blocked {

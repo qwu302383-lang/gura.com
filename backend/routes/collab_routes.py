@@ -587,9 +587,12 @@ def music_control():
         if action == "pause":
             player["status"] = "paused"
         elif action == "resume" or action == "play":
-            player["status"] = "playing"
+            if player.get("current_track"):
+                player["status"] = "playing"
+            else:
+                player["status"] = "idle"
         elif action == "next":
-            if player["queue"]:
+            if player.get("queue") and len(player["queue"]) > 0:
                 next_t = player["queue"].pop(0)
                 if player.get("current_track"):
                     player["history"].append(player["current_track"])
@@ -597,11 +600,8 @@ def music_control():
                 player["status"] = "playing"
                 player["started_at"] = now
             else:
-                # 隊列空時隨機推薦一首預設音樂
-                next_t = random.choice(PRESET_MUSIC)
-                player["current_track"] = next_t
-                player["status"] = "playing"
-                player["started_at"] = now
+                player["status"] = "idle"
+                player["current_track"] = None
         elif action == "clear_queue":
             player["queue"] = []
 
@@ -662,18 +662,21 @@ def dj_chat():
             player["started_at"] = now
         elif action == "next":
             player = room["music_player"]
-            if player["queue"]:
+            if player.get("queue") and len(player["queue"]) > 0:
                 track = player["queue"].pop(0)
                 player["current_track"] = track
                 player["status"] = "playing"
             else:
-                track = random.choice(PRESET_MUSIC)
-                player["current_track"] = track
-                player["status"] = "playing"
+                player["status"] = "idle"
+                player["current_track"] = None
+                track = None
         elif action == "pause":
             room["music_player"]["status"] = "paused"
         elif action == "resume":
-            room["music_player"]["status"] = "playing"
+            if room["music_player"].get("current_track"):
+                room["music_player"]["status"] = "playing"
+            else:
+                room["music_player"]["status"] = "idle"
 
         dj_msg_id = len(room["voice_messages"]) + 1
         room["voice_messages"].append({

@@ -207,7 +207,9 @@ def resolve_spotify_track(input_text: str):
             p["artist"].lower() in clean_text.lower() or
             clean_text.lower() in p["title"].lower() or
             (p["category"].lower() in clean_text.lower() and len(clean_text) <= 6)):
-            return dict(p)
+            item = dict(p)
+            item["source"] = "preset"
+            return item
 
     # 3. 嘗試以 iTunes API 搜尋歌曲元數據（名稱、藝人、專輯封面、真實音訊串流）
     search_query = clean_text
@@ -338,12 +340,21 @@ def handle_dj_chat(text: str, user_name: str, room: dict):
             "track": None
         }
 
-    # 5. 音樂點播或推薦請求
-    music_keywords = ["聽", "播", "放", "歌", "曲", "音樂", "spotify", "點歌", "lofi", "推薦", "抒情", "熱門"]
+    # 5. 音樂點播或推薦請求（支援「我想聽 晴天」或直接輸入歌名如「晴天」、「周杰倫」）
+    music_keywords = ["聽", "播", "放", "歌", "曲", "音樂", "spotify", "點歌", "lofi", "推薦", "抒情", "熱門", "來首", "唱"]
     is_music_request = any(kw in clean_text.lower() for kw in music_keywords) or ("spotify.com" in clean_text)
     
+    track = None
+    GREETING_WORDS = {"嗨", "你好", "您好", "哈囉", "hello", "hi", "hey", "早安", "午安", "晚安", "在嗎", "你是誰", "機器人", "功能", "指令", "help", "救命", "掰掰", "再見"}
+    if not is_music_request and clean_text.strip().lower() not in GREETING_WORDS:
+        candidate_track = resolve_spotify_track(clean_text)
+        if candidate_track and (candidate_track.get("source") in ["spotify_direct", "preset", "search"] or len(clean_text) >= 2):
+            is_music_request = True
+            track = candidate_track
+
     if is_music_request:
-        track = resolve_spotify_track(clean_text)
+        if not track:
+            track = resolve_spotify_track(clean_text)
         reply_msg = (
             f"🎧 **【DJ 已為大家點播】《{track['title']}》**\n\n"
             f"🎤 **歌手 / 演出**：{track.get('artist', '精選音樂')}\n"
