@@ -8,20 +8,47 @@
   --panel: #ffffff;
   --mono: 'DM Mono', monospace;
   --sans: 'Noto Sans TC', 'Space Grotesk', sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-text-size-adjust: 100%;
+}
 body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opacity: .28; background-image: radial-gradient(#9ac2e6 0.75px, transparent 0.75px); background-size: 13px 13px; }
 button, textarea { font: inherit; }
 button { cursor: pointer; }
-.page-shell { position: relative; z-index: 1; width: 100%; max-width: 100%; padding: 0 28px; box-sizing: border-box; min-height: 100vh; display: flex; flex-direction: column; }
-.topbar { height: 64px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--line); }
+.page-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 28px;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.topbar { height: 64px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: .02em; }
 .brand-mark { display: grid; place-items: center; width: 27px; height: 27px; background: #0284c7; color: #ffffff; font-size: 14px; font-weight: 700; border-radius: 6px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25); }
 .section-label, .shortcut, .footer, .message-meta { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; }
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
-.login-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 18px; font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: .03em; border-radius: 6px; transition: all .2s ease; cursor: pointer; }
+.login-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 18px; font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: .03em; border-radius: 6px; transition: all .2s ease; cursor: pointer; white-space: nowrap; }
 .login-btn:hover { background: #0284c7; color: #ffffff; border-color: #0284c7; }
 .google-login-topbar-btn { background: #ffffff; color: var(--ink); border: 1px solid #cce0f2; border-radius: 6px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08); }
 .google-login-topbar-btn:hover { background: #f0f7ff; border-color: #7dd3fc; color: #0284c7; }
@@ -37,7 +64,7 @@ button { cursor: pointer; }
 .user-email { font-size: 10px; color: var(--muted); font-family: var(--mono); }
 .logout-link { background: transparent; border: 0; color: var(--muted); font-size: 12px; padding: 4px 6px; text-decoration: underline; cursor: pointer; transition: color .15s; }
 .logout-link:hover { color: var(--accent); }
-.workspace { flex: 1; display: flex; min-height: calc(100vh - 88px); width: 100%; box-sizing: border-box; }
+.workspace { flex: 1; display: flex; min-height: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
 
 /* Gemini 風格側邊欄 */
 .sidebar {
@@ -651,9 +678,61 @@ button { cursor: pointer; }
 @keyframes modalSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
+/* ========================================================
+   設備比例自適應系統 (Device-Aware Adaptive System)
+   支援: 桌面超寬螢幕 (21:9 / 4K)、標準筆電 (16:9 / 16:10)、
+         平板電腦 (4:3 / 16:10)、智慧型手機 (9:16 ~ 9:20)、橫向手機
+   ======================================================== */
+
+/* 1. 寬螢幕與超寬螢幕最佳化 (>= 1440px / 21:9 / 4K) */
+@media (min-width: 1440px) {
+  .page-shell {
+    max-width: 1680px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .chat-panel {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* 2. 平板電腦與中型設備 (769px ~ 1024px, 例如 iPad, Surface, Android 平板) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .page-shell {
+    padding: 0 16px;
+  }
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    padding-right: 10px;
+  }
+  .chat-panel {
+    padding: 20px 20px 24px;
+  }
+  .topbar-actions {
+    gap: 8px;
+  }
+  .login-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .backend-model-badge {
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+  .todo-widget {
+    bottom: 18px;
+    right: 18px;
+  }
+}
+
+/* 3. 手機與窄螢幕 (<= 768px, 包含直向手機 / 9:16 ~ 9:20) */
 @media (max-width: 768px) {
   html, body {
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -666,6 +745,10 @@ button { cursor: pointer; }
     height: 100dvh;
     height: 100vh;
     padding: 0;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -674,7 +757,7 @@ button { cursor: pointer; }
   .topbar {
     height: 52px;
     min-height: 52px;
-    padding: 0 12px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -688,15 +771,16 @@ button { cursor: pointer; }
   .mobile-menu-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     background: #f1f5f9;
     color: #1e293b;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 12.5px;
+    padding: 6px 9px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    flex-shrink: 0;
     transition: all 0.15s ease;
   }
 
@@ -706,14 +790,32 @@ button { cursor: pointer; }
     color: #0284c7;
   }
 
+  .mobile-menu-text {
+    font-size: 12px;
+  }
+
   .topbar-actions {
+    display: flex;
+    align-items: center;
     gap: 6px;
+    flex-shrink: 0;
   }
 
   .login-btn {
     padding: 5px 8px;
-    font-size: 11px;
+    font-size: 11.5px;
     border-radius: 6px;
+    gap: 4px;
+  }
+
+  .backend-status-btn {
+    padding: 5px 8px;
+    font-size: 11.5px;
+    gap: 5px;
+  }
+
+  .backend-model-badge {
+    display: none;
   }
 
   .user-name {
@@ -754,6 +856,8 @@ button { cursor: pointer; }
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
     z-index: 1300;
     padding: 16px 14px;
+    padding-top: calc(16px + var(--safe-top));
+    padding-bottom: calc(16px + var(--safe-bottom));
     transform: translateX(-105%);
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
@@ -812,7 +916,7 @@ button { cursor: pointer; }
   }
 
   .sidebar-collapse-btn {
-    display: none; /* 手機版使用專屬關閉鈕 ✕ */
+    display: none;
   }
 
   /* 歷史紀錄區在手機抽屜內順暢滾動 */
@@ -865,7 +969,7 @@ button { cursor: pointer; }
     font-size: 10px;
   }
 
-  /* 對話訊息串流全螢幕垂直延展，移除 50vh 上限 */
+  /* 對話訊息串流全螢幕垂直延展，移除高度上限 */
   .messages {
     flex: 1;
     min-height: 0;
@@ -878,7 +982,7 @@ button { cursor: pointer; }
   }
 
   .welcome-message {
-    padding-top: 20px;
+    padding-top: 18px;
     gap: 12px;
   }
 
@@ -901,11 +1005,17 @@ button { cursor: pointer; }
   .composer-toolbar {
     margin-bottom: 6px;
     gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
   }
 
   .toolbar-pill-btn {
-    padding: 4px 9px;
+    padding: 4px 8px;
     font-size: 11.5px;
+    flex-shrink: 0;
   }
 
   .composer-box {
@@ -935,8 +1045,141 @@ button { cursor: pointer; }
     gap: 10px;
   }
 
-  /* 隱藏手機下方版權橫條以釋放全部畫面高度給對話框 */
   .footer {
+    display: none;
+  }
+}
+
+/* 4. 超窄手機最佳化 (<= 480px, 例如 iPhone SE / 小型 Android / 摺疊直向外螢幕) */
+@media (max-width: 480px) {
+  .topbar {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 8px;
+  }
+
+  .topbar-actions {
+    gap: 4px;
+  }
+
+  .mobile-menu-text {
+    display: none;
+  }
+
+  .login-btn {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  /* 在窄螢幕上將按鈕文字精簡或隱藏，保留清楚的圖示，杜絕頂部換行擠爆 */
+  .collab-topbar-btn .btn-text,
+  .sync-btn .btn-text,
+  .google-login-topbar-btn .btn-text {
+    display: none;
+  }
+
+  .backend-status-btn {
+    padding: 4px 6px;
+  }
+
+  .chat-panel {
+    padding: 6px 8px 8px;
+  }
+
+  .message {
+    padding: 12px 0;
+  }
+
+  .message-body {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .composer textarea {
+    min-height: 44px;
+    font-size: 13.5px;
+  }
+
+  .toolbar-pill-btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+
+/* 5. 微型尺寸 (<= 360px) */
+@media (max-width: 360px) {
+  .topbar-actions {
+    gap: 2px;
+  }
+  .login-btn {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+  .backend-status-text {
+    display: none;
+  }
+}
+
+/* 6. 手機橫向螢幕 (Landscape Mode, 螢幕高度 <= 500px 且橫向) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .page-shell {
+    height: 100dvh;
+    padding: 0 8px;
+  }
+
+  .topbar {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 8px;
+  }
+
+  .topbar-actions {
+    gap: 4px;
+  }
+
+  .login-btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  .workspace {
+    height: calc(100% - 40px);
+  }
+
+  .chat-panel {
+    padding: 4px 8px 6px;
+  }
+
+  .panel-heading {
+    display: none;
+  }
+
+  .messages {
+    padding: 4px 2px;
+    margin-bottom: 4px;
+  }
+
+  .welcome-message {
+    padding-top: 8px;
+  }
+
+  .composer textarea {
+    min-height: 36px;
+    max-height: 65px;
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+
+  .composer-toolbar {
+    margin-bottom: 2px;
+  }
+
+  .toolbar-pill-btn {
+    padding: 2px 6px;
+    font-size: 10.5px;
+  }
+
+  .todo-widget {
     display: none;
   }
 }
