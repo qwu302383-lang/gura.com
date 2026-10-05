@@ -66,10 +66,11 @@ button { cursor: pointer; }
 .logout-link:hover { color: var(--accent); }
 .workspace { flex: 1; display: flex; min-height: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
 
-/* Gemini 風格側邊欄 */
+/* Gemini 風格側邊欄 (依視窗寬度比例流動調整) */
 .sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: clamp(210px, 19vw, 320px);
+  min-width: 200px;
+  max-width: 340px;
   padding: 16px 14px 16px 0;
   border-right: 1px solid var(--line);
   display: flex;
@@ -516,10 +517,11 @@ button { cursor: pointer; }
 .chat-panel {
   flex: 1;
   min-width: 0;
-  padding: 24px 32px 28px 36px;
+  padding: clamp(14px, 2vh, 26px) clamp(14px, 2.5vw, 36px);
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
 }
 .panel-heading {
@@ -679,48 +681,59 @@ button { cursor: pointer; }
 @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ========================================================
-   設備比例自適應系統 (Device-Aware Adaptive System)
-   支援: 桌面超寬螢幕 (21:9 / 4K)、標準筆電 (16:9 / 16:10)、
-         平板電腦 (4:3 / 16:10)、智慧型手機 (9:16 ~ 9:20)、橫向手機
+   動態設備寬高比自適應系統 (Device Aspect-Ratio Adaptive System)
+   不是固定死板寬度，而是依據設備的實際寬高比 (aspect-ratio)
+   與視窗比例 (vw / vh / %) 進行動態分配與流動縮放
    ======================================================== */
 
-/* 1. 寬螢幕與超寬螢幕最佳化 (>= 1440px / 21:9 / 4K) */
-@media (min-width: 1440px) {
+/* 1. 寬螢幕比例設備 (Widescreen: 寬高比 >= 16:10，包含 16:9, 16:10, 21:9, 32:9 超寬屏) */
+@media (min-aspect-ratio: 16/10) {
   .page-shell {
-    max-width: 1680px;
-    margin: 0 auto;
-    padding: 0 40px;
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0 clamp(16px, 2.2vw, 36px);
+  }
+  .sidebar {
+    width: clamp(210px, 18vw, 320px);
+    min-width: 200px;
   }
   .chat-panel {
-    max-width: 1120px;
-    margin: 0 auto;
+    flex: 1;
     width: 100%;
+    max-width: 100%;
+    padding: clamp(16px, 2.2vh, 28px) clamp(16px, 2.8vw, 42px);
+  }
+  .messages,
+  .composer {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
-/* 2. 平板電腦與中型設備 (769px ~ 1024px, 例如 iPad, Surface, Android 平板) */
-@media (min-width: 769px) and (max-width: 1024px) {
+/* 2. 平板 / 正方形比例設備 (Medium / Square Aspect Ratio: 1:1 < 寬高比 < 16:10，例如 4:3, 3:2, 16:10 平板) */
+@media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 16/10) {
   .page-shell {
-    padding: 0 16px;
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0 clamp(10px, 1.8vw, 20px);
   }
   .sidebar {
-    width: 220px;
-    min-width: 220px;
+    width: clamp(180px, 23vw, 250px);
+    min-width: 170px;
     padding-right: 10px;
   }
   .chat-panel {
-    padding: 20px 20px 24px;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    padding: clamp(12px, 1.8vh, 20px) clamp(12px, 2vw, 24px);
   }
   .topbar-actions {
-    gap: 8px;
+    gap: clamp(4px, 1vw, 8px);
   }
   .login-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-  .backend-model-badge {
-    padding: 1px 6px;
-    font-size: 10px;
+    padding: 6px clamp(6px, 1vw, 12px);
+    font-size: clamp(11px, 0.9vw + 4px, 12.5px);
   }
   .todo-widget {
     bottom: 18px;
@@ -728,8 +741,8 @@ button { cursor: pointer; }
   }
 }
 
-/* 3. 手機與窄螢幕 (<= 768px, 包含直向手機 / 9:16 ~ 9:20) */
-@media (max-width: 768px) {
+/* 3. 直向比例設備 (Portrait Devices: 寬高比 <= 1:1，包含 9:16, 9:19.5, 9:20 直立手機與直向平板) */
+@media (max-aspect-ratio: 1/1) {
   html, body {
     height: 100%;
     height: 100dvh;
@@ -741,7 +754,8 @@ button { cursor: pointer; }
   }
 
   .page-shell {
-    width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     height: 100dvh;
     height: 100vh;
     padding: 0;
@@ -755,9 +769,9 @@ button { cursor: pointer; }
   }
 
   .topbar {
-    height: 52px;
-    min-height: 52px;
-    padding: 0 10px;
+    height: clamp(46px, 6.5vh, 54px);
+    min-height: 46px;
+    padding: 0 clamp(8px, 2.5vw, 14px);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -767,7 +781,13 @@ button { cursor: pointer; }
     flex-shrink: 0;
   }
 
-  /* 行動版歷史紀錄按鈕 */
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: clamp(3px, 1vw, 6px);
+    flex-shrink: 0;
+  }
+
   .mobile-menu-btn {
     display: inline-flex;
     align-items: center;
@@ -776,40 +796,26 @@ button { cursor: pointer; }
     color: #1e293b;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    padding: 6px 9px;
+    padding: 5px 8px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.15s ease;
-  }
-
-  .mobile-menu-btn:active {
-    background: #e2e8f0;
-    border-color: #93c5fd;
-    color: #0284c7;
   }
 
   .mobile-menu-text {
     font-size: 12px;
   }
 
-  .topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-
   .login-btn {
-    padding: 5px 8px;
+    padding: 5px clamp(5px, 1.2vw, 8px);
     font-size: 11.5px;
     border-radius: 6px;
     gap: 4px;
   }
 
   .backend-status-btn {
-    padding: 5px 8px;
+    padding: 5px clamp(5px, 1.2vw, 8px);
     font-size: 11.5px;
     gap: 5px;
   }
@@ -830,26 +836,26 @@ button { cursor: pointer; }
     display: none;
   }
 
-  /* 工作區全螢幕垂直延展 */
   .workspace {
     flex: 1;
     min-height: 0;
-    height: calc(100% - 52px);
+    height: calc(100% - clamp(46px, 6.5vh, 54px));
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
     padding: 0;
+    width: 100%;
   }
 
-  /* 側邊欄改為抽屜式 (Off-Canvas Drawer)，預設收合在左側外 */
+  /* 直向模式側邊欄轉為全螢幕比例抽屜 (Off-Canvas Drawer) */
   .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: 82vw;
-    max-width: 320px;
+    width: clamp(260px, 80vw, 360px);
+    max-width: 85vw;
     height: 100dvh;
     height: 100vh;
     background: #ffffff;
@@ -873,7 +879,6 @@ button { cursor: pointer; }
     transform: translateX(0);
   }
 
-  /* 手機版遮罩 */
   .sidebar-backdrop {
     display: block !important;
     position: fixed;
@@ -887,7 +892,6 @@ button { cursor: pointer; }
     animation: modalFadeIn 0.2s ease;
   }
 
-  /* 手機版側邊欄右上關閉按鈕 */
   .mobile-sidebar-close-btn {
     display: flex;
     align-items: center;
@@ -901,25 +905,12 @@ button { cursor: pointer; }
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .mobile-sidebar-close-btn:active {
-    background: #e2e8f0;
-    color: #0f172a;
-  }
-
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
 
   .sidebar-collapse-btn {
     display: none;
   }
 
-  /* 歷史紀錄區在手機抽屜內順暢滾動 */
   .history-section {
     margin-top: 4px;
     flex: 1;
@@ -943,12 +934,13 @@ button { cursor: pointer; }
     font-size: 13px;
   }
 
-  /* 右側對話區域手機版：100% 全螢幕且無多餘內邊距 */
   .chat-panel {
     flex: 1;
     min-height: 0;
     height: 100%;
-    padding: 8px 12px 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: clamp(6px, 1.2vh, 12px) clamp(8px, 2.5vw, 16px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -961,7 +953,7 @@ button { cursor: pointer; }
   }
 
   .panel-heading h2 {
-    font-size: 17px;
+    font-size: clamp(16px, 2.2vh + 0.8vw, 20px);
     margin-top: 2px;
   }
 
@@ -969,42 +961,41 @@ button { cursor: pointer; }
     font-size: 10px;
   }
 
-  /* 對話訊息串流全螢幕垂直延展，移除高度上限 */
   .messages {
     flex: 1;
     min-height: 0;
-    max-height: none;
     height: 100%;
+    width: 100%;
+    max-width: 100%;
     overflow-y: auto;
-    padding: 8px 2px 8px 0;
-    margin-bottom: 6px;
+    padding: 6px 2px;
+    margin-bottom: 4px;
     -webkit-overflow-scrolling: touch;
   }
 
   .welcome-message {
-    padding-top: 18px;
-    gap: 12px;
+    padding-top: clamp(10px, 2vh, 24px);
+    gap: 10px;
   }
 
   .welcome-message h3 {
-    font-size: 16px;
-    margin-bottom: 4px;
+    font-size: clamp(15px, 2.2vh + 1vw, 20px);
   }
 
   .welcome-message p {
-    font-size: 12.5px;
-    line-height: 1.5;
+    font-size: clamp(12px, 1.6vh + 0.5vw, 14.5px);
   }
 
   .composer {
     padding-top: 4px;
     flex-shrink: 0;
+    width: 100%;
     background: #ffffff;
   }
 
   .composer-toolbar {
-    margin-bottom: 6px;
-    gap: 6px;
+    margin-bottom: 4px;
+    gap: 5px;
     overflow-x: auto;
     flex-wrap: nowrap;
     white-space: nowrap;
@@ -1013,20 +1004,22 @@ button { cursor: pointer; }
   }
 
   .toolbar-pill-btn {
-    padding: 4px 8px;
-    font-size: 11.5px;
+    padding: 3px clamp(6px, 1.5vw, 9px);
+    font-size: clamp(10.5px, 0.9vw + 3px, 12px);
     flex-shrink: 0;
   }
 
   .composer-box {
     margin-bottom: 0;
+    width: 100%;
   }
 
   .composer textarea {
-    min-height: 48px;
-    max-height: 110px;
-    font-size: 14px;
-    padding: 8px 10px;
+    min-height: clamp(42px, 6vh, 56px);
+    max-height: 25vh;
+    font-size: clamp(13px, 0.8vw + 3px, 14.5px);
+    padding: 6px 10px;
+    width: 100%;
   }
 
   .composer-actions {
@@ -1050,11 +1043,10 @@ button { cursor: pointer; }
   }
 }
 
-/* 4. 超窄手機最佳化 (<= 480px, 例如 iPhone SE / 小型 Android / 摺疊直向外螢幕) */
-@media (max-width: 480px) {
+/* 4. 極端高寬比窄屏手機 (Extreme Narrow Aspect-Ratio: 寬高比 <= 9:18，例如 9:19.5, 9:20 全螢幕手機) */
+@media (max-aspect-ratio: 9/18) {
   .topbar {
     height: 48px;
-    min-height: 48px;
     padding: 0 8px;
   }
 
@@ -1066,20 +1058,19 @@ button { cursor: pointer; }
     display: none;
   }
 
-  .login-btn {
-    padding: 4px 6px;
-    font-size: 11px;
-  }
-
-  /* 在窄螢幕上將按鈕文字精簡或隱藏，保留清楚的圖示，杜絕頂部換行擠爆 */
   .collab-topbar-btn .btn-text,
   .sync-btn .btn-text,
   .google-login-topbar-btn .btn-text {
     display: none;
   }
 
-  .backend-status-btn {
+  .backend-model-badge {
+    display: none;
+  }
+
+  .login-btn {
     padding: 4px 6px;
+    font-size: 11px;
   }
 
   .chat-panel {
@@ -1099,59 +1090,31 @@ button { cursor: pointer; }
     min-height: 44px;
     font-size: 13.5px;
   }
-
-  .toolbar-pill-btn {
-    padding: 3px 6px;
-    font-size: 11px;
-  }
 }
 
-/* 5. 微型尺寸 (<= 360px) */
-@media (max-width: 360px) {
-  .topbar-actions {
-    gap: 2px;
-  }
-  .login-btn {
-    padding: 3px 5px;
-    font-size: 10px;
-  }
-  .backend-status-text {
-    display: none;
-  }
-}
-
-/* 6. 手機橫向螢幕 (Landscape Mode, 螢幕高度 <= 500px 且橫向) */
-@media (max-height: 500px) and (orientation: landscape) {
+/* 5. 極度矮螢幕橫向手機 (Extreme Landscape: 高度 <= 480px 且橫向) */
+@media (max-height: 480px) and (orientation: landscape) {
   .page-shell {
     height: 100dvh;
     padding: 0 8px;
   }
 
   .topbar {
-    height: 40px;
-    min-height: 40px;
+    height: clamp(34px, 8vh, 40px);
+    min-height: 34px;
     padding: 0 8px;
-  }
-
-  .topbar-actions {
-    gap: 4px;
-  }
-
-  .login-btn {
-    padding: 3px 6px;
-    font-size: 11px;
-  }
-
-  .workspace {
-    height: calc(100% - 40px);
-  }
-
-  .chat-panel {
-    padding: 4px 8px 6px;
   }
 
   .panel-heading {
     display: none;
+  }
+
+  .workspace {
+    height: calc(100% - clamp(34px, 8vh, 40px));
+  }
+
+  .chat-panel {
+    padding: 4px 8px;
   }
 
   .messages {
@@ -1160,14 +1123,14 @@ button { cursor: pointer; }
   }
 
   .welcome-message {
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .composer textarea {
-    min-height: 36px;
-    max-height: 65px;
-    padding: 5px 8px;
-    font-size: 13px;
+    min-height: 34px;
+    max-height: 60px;
+    padding: 4px 8px;
+    font-size: 12.5px;
   }
 
   .composer-toolbar {
