@@ -1995,6 +1995,10 @@ class CollabController {
     const membersList = Array.isArray(room.members) ? room.members : Object.values(room.members || {});
     this.updateMembers(membersList);
 
+    if (window.voiceController) {
+      window.voiceController.onEnterRoom(room);
+    }
+
     this.startPolling();
   }
 
@@ -2186,7 +2190,8 @@ class CollabController {
     this.isSyncing = true;
 
     try {
-      const res = await fetch(`/api/collab/sync/${this.roomId}?since=${this.lastMessageId}&user_id=${this.userId}&user_name=${encodeURIComponent(this.userName)}`);
+      const voiceSince = (window.voiceController && window.voiceController.lastVoiceMsgId) ? window.voiceController.lastVoiceMsgId : 0;
+      const res = await fetch(`/api/collab/sync/${this.roomId}?since=${this.lastMessageId}&voice_since=${voiceSince}&user_id=${this.userId}&user_name=${encodeURIComponent(this.userName)}`);
       if (res.status === 404) {
         this.stopPolling();
         alert('專案連機房間已關閉或不存在。');
@@ -2211,6 +2216,10 @@ class CollabController {
           if (data.shared_notes !== undefined && collabSharedNotesInput.value !== data.shared_notes) {
             collabSharedNotesInput.value = data.shared_notes;
           }
+        }
+
+        if (window.voiceController) {
+          window.voiceController.syncState(data);
         }
       }
     } catch (err) {
@@ -2314,6 +2323,11 @@ class CollabController {
     if (sidebarCollabCountBadge) sidebarCollabCountBadge.style.display = 'none';
     if (collabBanner) collabBanner.style.display = 'none';
 
+    if (window.voiceController) {
+      window.voiceController.leaveCall(false);
+      window.voiceController.onLeaveRoom();
+    }
+
     this.closeModal();
 
     if (currentRoom) {
@@ -2335,6 +2349,954 @@ class CollabController {
 // 實例化並啟動協作控制器
 const collabController = new CollabController();
 collabController.init();
+
+// ==========================================
+// 9.5 聯機語音通話 (Voice Channel) 與 Spotify 音樂 DJ Lounge 控制器
+// ==========================================
+class VoiceAndMusicController {
+  constructor() {
+    this.roomId = null;
+    this.userId = null;
+    this.userName = null;
+    this.isInCall = false;
+    this.isMuted = false;
+    this.isDeafened = false;
+    this.isSpeaking = false;
+    this.localStream = null;
+    this.audioContext = null;
+    this.analyser = null;
+    this.animFrameId = null;
+    this.heartbeatTimer = null;
+    this.lastVoiceMsgId = 0;
+    this.currentTrack = null;
+    this.presets = [];
+    this.renderedVoiceMsgIds = new Set();
+    this.peerConnections = new Map();
+    this.remoteAudios = new Map();
+
+    // DOM 元素快取
+    this.collabVoiceBtn = document.querySelector('#collabVoiceBtn');
+    this.collabVoiceBadge = document.querySelector('#collabVoiceBadge');
+    this.collabDjBtn = document.querySelector('#collabDjBtn');
+    this.collabDjPlayingDot = document.querySelector('#collabDjPlayingDot');
+    this.collabVoiceModal = document.querySelector('#collabVoiceModal');
+    this.closeVoiceModalBtn = document.querySelector('#closeVoiceModalBtn');
+    this.toggleVoiceCallBtn = document.querySelector('#toggleVoiceCallBtn');
+    this.toggleVoiceCallText = document.querySelector('#toggleVoiceCallText');
+    this.voiceMicBtn = document.querySelector('#voiceMicBtn');
+    this.voiceMicIcon = document.querySelector('#voiceMicIcon');
+    this.voiceMicText = document.querySelector('#voiceMicText');
+    this.voiceDeafenBtn = document.querySelector('#voiceDeafenBtn');
+    this.voiceDeafenIcon = document.querySelector('#voiceDeafenIcon');
+    this.voiceDeafenText = document.querySelector('#voiceDeafenText');
+    this.voiceCallStatusTag = document.querySelector('#voiceCallStatusTag');
+    this.voicePingTag = document.querySelector('#voicePingTag');
+    this.voiceParticipantsList = document.querySelector('#voiceParticipantsList');
+    this.voiceParticipantCount = document.querySelector('#voiceParticipantCount');
+    this.voiceTabMusicBtn = document.querySelector('#voiceTabMusicBtn');
+    this.voiceTabDjBtn = document.querySelector('#voiceTabDjBtn');
+    this.voiceMusicTab = document.querySelector('#voiceMusicTab');
+    this.voiceDjTab = document.querySelector('#voiceDjTab');
+    this.spotifyEmbedIframe = document.querySelector('#spotifyEmbedIframe');
+    this.nowPlayingTitle = document.querySelector('#nowPlayingTitle');
+    this.nowPlayingArtist = document.querySelector('#nowPlayingArtist');
+    this.nowPlayingRequester = document.querySelector('#nowPlayingRequester');
+    this.openInSpotifyBtn = document.querySelector('#openInSpotifyBtn');
+    this.musicPlayerStatusTag = document.querySelector('#musicPlayerStatusTag');
+    this.musicPauseResumeBtn = document.querySelector('#musicPauseResumeBtn');
+    this.musicNextBtn = document.querySelector('#musicNextBtn');
+    this.musicClearQueueBtn = document.querySelector('#musicClearQueueBtn');
+    this.musicSearchInput = document.querySelector('#musicSearchInput');
+    this.musicSearchBtn = document.querySelector('#musicSearchBtn');
+    this.musicPresetsContainer = document.querySelector('#musicPresetsContainer');
+    this.musicQueueList = document.querySelector('#musicQueueList');
+    this.musicQueueCount = document.querySelector('#musicQueueCount');
+    this.voiceDjMessages = document.querySelector('#voiceDjMessages');
+    this.voiceDjInput = document.querySelector('#voiceDjInput');
+    this.voiceDjForm = document.querySelector('#voiceDjForm');
+    this.voiceMiniDock = document.querySelector('#voiceMiniDock');
+    this.voiceMiniStatus = document.querySelector('#voiceMiniStatus');
+    this.voiceMiniTrack = document.querySelector('#voiceMiniTrack');
+    this.voiceMiniMicBtn = document.querySelector('#voiceMiniMicBtn');
+    this.voiceMiniOpenBtn = document.querySelector('#voiceMiniOpenBtn');
+    this.openVoiceFromCollabModalBtn = document.querySelector('#openVoiceFromCollabModalBtn');
+  }
+
+  init() {
+    this.bindEvents();
+    this.loadPresets();
+  }
+
+  bindEvents() {
+    if (this.collabVoiceBtn) {
+      this.collabVoiceBtn.addEventListener('click', () => this.handleVoiceBtnClick());
+    }
+    if (this.collabDjBtn) {
+      this.collabDjBtn.addEventListener('click', () => this.openModal('dj'));
+    }
+    if (this.openVoiceFromCollabModalBtn) {
+      this.openVoiceFromCollabModalBtn.addEventListener('click', () => {
+        if (collabController) collabController.closeModal();
+        this.openModal('music');
+      });
+    }
+    if (this.closeVoiceModalBtn) {
+      this.closeVoiceModalBtn.addEventListener('click', () => this.closeModal());
+    }
+    if (this.collabVoiceModal) {
+      this.collabVoiceModal.addEventListener('click', (e) => {
+        if (e.target === this.collabVoiceModal) this.closeModal();
+      });
+    }
+
+    if (this.toggleVoiceCallBtn) {
+      this.toggleVoiceCallBtn.addEventListener('click', () => this.toggleCall());
+    }
+    if (this.voiceMicBtn) {
+      this.voiceMicBtn.addEventListener('click', () => this.toggleMic());
+    }
+    if (this.voiceDeafenBtn) {
+      this.voiceDeafenBtn.addEventListener('click', () => this.toggleDeafen());
+    }
+
+    if (this.voiceTabMusicBtn && this.voiceTabDjBtn) {
+      this.voiceTabMusicBtn.addEventListener('click', () => this.switchTab('music'));
+      this.voiceTabDjBtn.addEventListener('click', () => this.switchTab('dj'));
+    }
+
+    if (this.musicSearchBtn) {
+      this.musicSearchBtn.addEventListener('click', () => this.handleMusicSearch());
+    }
+    if (this.musicSearchInput) {
+      this.musicSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.handleMusicSearch();
+        }
+      });
+    }
+
+    if (this.musicPauseResumeBtn) {
+      this.musicPauseResumeBtn.addEventListener('click', () => this.handleMusicControl('pause_resume'));
+    }
+    if (this.musicNextBtn) {
+      this.musicNextBtn.addEventListener('click', () => this.handleMusicControl('next'));
+    }
+    if (this.musicClearQueueBtn) {
+      this.musicClearQueueBtn.addEventListener('click', () => this.handleMusicControl('clear_queue'));
+    }
+
+    if (this.voiceDjForm) {
+      this.voiceDjForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleDjChatSubmit();
+      });
+    }
+
+    const quickBtns = document.querySelectorAll('.dj-quick-btn');
+    quickBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.getAttribute('data-cmd') || btn.textContent;
+        this.sendDjMessage(cmd);
+      });
+    });
+
+    if (this.voiceMiniMicBtn) {
+      this.voiceMiniMicBtn.addEventListener('click', () => this.toggleMic());
+    }
+    if (this.voiceMiniOpenBtn) {
+      this.voiceMiniOpenBtn.addEventListener('click', () => this.openModal('music'));
+    }
+  }
+
+  onEnterRoom(room) {
+    this.roomId = room.room_id;
+    this.userId = collabController.userId;
+    this.userName = collabController.userName;
+    if (this.collabVoiceBtn) {
+      this.collabVoiceBtn.style.display = 'inline-flex';
+    }
+    if (this.collabDjBtn) {
+      this.collabDjBtn.style.display = 'inline-flex';
+    }
+  }
+
+  onLeaveRoom() {
+    this.roomId = null;
+    this.closeModal();
+    if (this.collabVoiceBtn) {
+      this.collabVoiceBtn.classList.remove('in-call');
+    }
+    if (this.voiceMiniDock) {
+      this.voiceMiniDock.style.display = 'none';
+    }
+  }
+
+  handleVoiceBtnClick() {
+    if (!collabController.isInRoom()) {
+      alert('請先建立或加入連機房間！');
+      return;
+    }
+    this.openModal('music');
+  }
+
+  openModal(tab = 'music') {
+    if (!this.collabVoiceModal) return;
+    this.collabVoiceModal.style.display = 'flex';
+    this.switchTab(tab);
+  }
+
+  closeModal() {
+    if (this.collabVoiceModal) {
+      this.collabVoiceModal.style.display = 'none';
+    }
+  }
+
+  switchTab(tab) {
+    if (tab === 'dj') {
+      if (this.voiceTabDjBtn) this.voiceTabDjBtn.classList.add('active');
+      if (this.voiceTabMusicBtn) this.voiceTabMusicBtn.classList.remove('active');
+      if (this.voiceDjTab) this.voiceDjTab.style.display = 'block';
+      if (this.voiceMusicTab) this.voiceMusicTab.style.display = 'none';
+      if (this.voiceDjInput) setTimeout(() => this.voiceDjInput.focus(), 150);
+    } else {
+      if (this.voiceTabMusicBtn) this.voiceTabMusicBtn.classList.add('active');
+      if (this.voiceTabDjBtn) this.voiceTabDjBtn.classList.remove('active');
+      if (this.voiceMusicTab) this.voiceMusicTab.style.display = 'block';
+      if (this.voiceDjTab) this.voiceDjTab.style.display = 'none';
+    }
+  }
+
+  async toggleCall() {
+    if (this.isInCall) {
+      await this.leaveCall(true);
+    } else {
+      await this.joinCall();
+    }
+  }
+
+  async joinCall() {
+    if (!collabController.isInRoom()) {
+      alert('請先建立或加入一個專案連機房間！');
+      return;
+    }
+    this.roomId = collabController.roomId;
+    this.userId = collabController.userId;
+    this.userName = collabController.userName;
+
+    try {
+      // 請求麥克風權限 (若用戶拒絕或無硬體則降級為純收聽模式)
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          this.setupAudioAnalysis();
+          this.isMuted = false;
+        } catch (micErr) {
+          console.warn('無法取得麥克風權限或麥克風不可用，進入純收聽模式：', micErr);
+          this.isMuted = true;
+        }
+      } else {
+        this.isMuted = true;
+      }
+
+      // 通知後端加入語音頻道
+      const res = await fetch('/api/collab/voice/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          user_id: this.userId,
+          user_name: this.userName
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '加入通話失敗');
+      }
+
+      this.isInCall = true;
+      this.updateCallUI();
+      this.startHeartbeat();
+
+      if (collabController) {
+        collabController.pollSync();
+      }
+    } catch (err) {
+      alert('無法加入語音通話：' + err.message);
+    }
+  }
+
+  setupAudioAnalysis() {
+    if (!this.localStream) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      this.audioContext = new AudioCtx();
+      const source = this.audioContext.createMediaStreamSource(this.localStream);
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 256;
+      source.connect(this.analyser);
+
+      const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+      let silenceFrames = 0;
+
+      const checkVolume = () => {
+        if (!this.isInCall || !this.analyser) return;
+        this.analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / dataArray.length;
+        const nowSpeaking = avg > 18 && !this.isMuted;
+
+        if (nowSpeaking) {
+          silenceFrames = 0;
+          if (!this.isSpeaking) {
+            this.isSpeaking = true;
+            this.updateMySpeakingVisual(true);
+          }
+        } else {
+          silenceFrames++;
+          if (silenceFrames > 12 && this.isSpeaking) {
+            this.isSpeaking = false;
+            this.updateMySpeakingVisual(false);
+          }
+        }
+        this.animFrameId = requestAnimationFrame(checkVolume);
+      };
+      checkVolume();
+    } catch (e) {
+      console.warn('音訊能量監聽初始化失敗：', e);
+    }
+  }
+
+  updateMySpeakingVisual(isSpeaking) {
+    if (!this.voiceParticipantsList) return;
+    const myCard = this.voiceParticipantsList.querySelector(`[data-user-id="${this.userId}"]`);
+    if (myCard) {
+      if (isSpeaking) {
+        myCard.classList.add('speaking');
+      } else {
+        myCard.classList.remove('speaking');
+      }
+    }
+  }
+
+  startHeartbeat() {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = setInterval(async () => {
+      if (!this.isInCall || !this.roomId) return;
+      try {
+        await fetch('/api/collab/voice/state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room_id: this.roomId,
+            user_id: this.userId,
+            muted: this.isMuted,
+            deafened: this.isDeafened,
+            speaking: this.isSpeaking
+          })
+        });
+        this.pollSignals();
+      } catch (e) {
+        console.warn('語音心跳失敗：', e);
+      }
+    }, 4000);
+  }
+
+  async pollSignals() {
+    if (!this.isInCall || !this.roomId) return;
+    try {
+      const res = await fetch(`/api/collab/voice/signals/${this.roomId}?user_id=${this.userId}`);
+      const data = await res.json();
+      if (data && Array.isArray(data.signals) && data.signals.length > 0) {
+        for (const sig of data.signals) {
+          await this.handleIncomingSignal(sig);
+        }
+      }
+    } catch (e) {
+      console.warn('輪詢語音信令失敗：', e);
+    }
+  }
+
+  async handleIncomingSignal(sig) {
+    const fromId = sig.from_id;
+    let pc = this.peerConnections.get(fromId);
+    if (!pc) {
+      pc = this.createPeerConnection(fromId);
+    }
+
+    try {
+      if (sig.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(sig.payload));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await this.sendSignal(fromId, 'answer', answer);
+      } else if (sig.type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(sig.payload));
+      } else if (sig.type === 'candidate') {
+        if (sig.payload) {
+          await pc.addIceCandidate(new RTCIceCandidate(sig.payload));
+        }
+      }
+    } catch (e) {
+      console.warn('處理 WebRTC 信令失敗：', e);
+    }
+  }
+
+  createPeerConnection(peerId) {
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream));
+    }
+
+    pc.onicecandidate = (e) => {
+      if (e.candidate) {
+        this.sendSignal(peerId, 'candidate', e.candidate);
+      }
+    };
+
+    pc.ontrack = (e) => {
+      if (e.streams && e.streams[0]) {
+        let audioEl = this.remoteAudios.get(peerId);
+        if (!audioEl) {
+          audioEl = new Audio();
+          audioEl.autoplay = true;
+          this.remoteAudios.set(peerId, audioEl);
+        }
+        audioEl.srcObject = e.streams[0];
+        audioEl.muted = this.isDeafened;
+      }
+    };
+
+    this.peerConnections.set(peerId, pc);
+    return pc;
+  }
+
+  async sendSignal(toId, type, payload) {
+    if (!this.roomId) return;
+    try {
+      await fetch('/api/collab/voice/signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          from_id: this.userId,
+          to_id: toId,
+          type: type,
+          payload: payload
+        })
+      });
+    } catch (e) {
+      console.warn('發送語音信令失敗：', e);
+    }
+  }
+
+  async leaveCall(notifyServer = true) {
+    if (!this.isInCall) return;
+    this.isInCall = false;
+    this.isSpeaking = false;
+
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(t => t.stop());
+      this.localStream = null;
+    }
+    if (this.audioContext) {
+      try { this.audioContext.close(); } catch (e) {}
+      this.audioContext = null;
+    }
+
+    this.peerConnections.forEach(pc => pc.close());
+    this.peerConnections.clear();
+    this.remoteAudios.forEach(el => el.remove());
+    this.remoteAudios.clear();
+
+    if (notifyServer && this.roomId) {
+      fetch('/api/collab/voice/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          user_id: this.userId,
+          user_name: this.userName
+        })
+      }).catch(e => console.warn('通知伺服器離開通話失敗：', e));
+    }
+
+    this.updateCallUI();
+    if (collabController) {
+      collabController.pollSync();
+    }
+  }
+
+  toggleMic() {
+    if (!this.isInCall) return;
+    this.isMuted = !this.isMuted;
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach(t => {
+        t.enabled = !this.isMuted;
+      });
+    }
+    this.updateMicUI();
+    if (this.roomId) {
+      fetch('/api/collab/voice/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          user_id: this.userId,
+          muted: this.isMuted,
+          deafened: this.isDeafened,
+          speaking: false
+        })
+      }).catch(() => {});
+    }
+  }
+
+  toggleDeafen() {
+    if (!this.isInCall) return;
+    this.isDeafened = !this.isDeafened;
+    this.remoteAudios.forEach(audio => {
+      audio.muted = this.isDeafened;
+    });
+    this.updateDeafenUI();
+  }
+
+  updateCallUI() {
+    if (this.collabVoiceBtn) {
+      if (this.isInCall) {
+        this.collabVoiceBtn.classList.add('in-call');
+      } else {
+        this.collabVoiceBtn.classList.remove('in-call');
+      }
+    }
+
+    if (this.toggleVoiceCallBtn && this.toggleVoiceCallText) {
+      if (this.isInCall) {
+        this.toggleVoiceCallBtn.className = 'voice-btn danger';
+        this.toggleVoiceCallText.textContent = '🔴 離開語音通話';
+      } else {
+        this.toggleVoiceCallBtn.className = 'voice-btn primary';
+        this.toggleVoiceCallText.textContent = '🎙️ 加入語音通話';
+      }
+    }
+
+    if (this.voiceMicBtn) this.voiceMicBtn.disabled = !this.isInCall;
+    if (this.voiceDeafenBtn) this.voiceDeafenBtn.disabled = !this.isInCall;
+
+    if (this.voiceCallStatusTag) {
+      if (this.isInCall) {
+        this.voiceCallStatusTag.className = 'voice-status-tag online';
+        this.voiceCallStatusTag.textContent = '🟢 正在語音通話中';
+      } else {
+        this.voiceCallStatusTag.className = 'voice-status-tag offline';
+        this.voiceCallStatusTag.textContent = '⚪ 尚未加入通話';
+      }
+    }
+
+    if (this.voiceMiniDock) {
+      this.voiceMiniDock.style.display = this.isInCall ? 'block' : 'none';
+      if (this.voiceMiniStatus) {
+        this.voiceMiniStatus.textContent = this.isInCall ? '🎙️ 通話中' : '未在通話中';
+      }
+    }
+
+    this.updateMicUI();
+    this.updateDeafenUI();
+  }
+
+  updateMicUI() {
+    if (this.voiceMicBtn && this.voiceMicIcon && this.voiceMicText) {
+      if (this.isMuted) {
+        this.voiceMicBtn.classList.add('muted');
+        this.voiceMicIcon.textContent = '🔇';
+        this.voiceMicText.textContent = '已靜音';
+      } else {
+        this.voiceMicBtn.classList.remove('muted');
+        this.voiceMicIcon.textContent = '🎤';
+        this.voiceMicText.textContent = '開麥中';
+      }
+    }
+    if (this.voiceMiniMicBtn) {
+      this.voiceMiniMicBtn.textContent = this.isMuted ? '🔇' : '🎤';
+    }
+  }
+
+  updateDeafenUI() {
+    if (this.voiceDeafenBtn && this.voiceDeafenIcon && this.voiceDeafenText) {
+      if (this.isDeafened) {
+        this.voiceDeafenBtn.classList.add('muted');
+        this.voiceDeafenIcon.textContent = '🔕';
+        this.voiceDeafenText.textContent = '靜音全體';
+      } else {
+        this.voiceDeafenBtn.classList.remove('muted');
+        this.voiceDeafenIcon.textContent = '🎧';
+        this.voiceDeafenText.textContent = '收聽中';
+      }
+    }
+  }
+
+  syncState(data) {
+    if (!data) return;
+
+    // 1. 同步語音通話成員狀態
+    if (data.voice_channel) {
+      const vc = data.voice_channel;
+      const parts = Array.isArray(vc.participants) ? vc.participants : [];
+      const count = parts.length;
+
+      if (this.collabVoiceBadge) {
+        this.collabVoiceBadge.textContent = `${count}人`;
+        this.collabVoiceBadge.style.display = count > 0 ? 'inline-block' : 'none';
+      }
+      if (this.voiceParticipantCount) {
+        this.voiceParticipantCount.textContent = count;
+      }
+      if (this.voiceMiniStatus && this.isInCall) {
+        this.voiceMiniStatus.textContent = `通話中 (${count}人)`;
+      }
+
+      this.renderParticipants(parts);
+
+      // 若自己在線通話中，且有新的 peer 加入，建立 WebRTC PeerConnection
+      if (this.isInCall) {
+        parts.forEach(p => {
+          if (p.user_id !== this.userId && !this.peerConnections.has(p.user_id)) {
+            if (this.userId > p.user_id) {
+              const pc = this.createPeerConnection(p.user_id);
+              pc.createOffer().then(offer => {
+                pc.setLocalDescription(offer);
+                this.sendSignal(p.user_id, 'offer', offer);
+              });
+            }
+          }
+        });
+      }
+    }
+
+    // 2. 同步音樂播放狀態與 Spotify 播放器
+    if (data.music_player) {
+      const mp = data.music_player;
+      const track = mp.current_track;
+
+      if (track) {
+        const isDifferentTrack = !this.currentTrack || this.currentTrack.id !== track.id;
+        this.currentTrack = track;
+
+        if (isDifferentTrack) {
+          if (this.spotifyEmbedIframe && track.spotify_embed_url) {
+            this.spotifyEmbedIframe.src = track.spotify_embed_url;
+          }
+          if (this.nowPlayingTitle) this.nowPlayingTitle.textContent = track.title || '精選音樂';
+          if (this.nowPlayingArtist) this.nowPlayingArtist.textContent = track.artist || 'Spotify 藝人';
+          if (this.nowPlayingRequester) this.nowPlayingRequester.textContent = `（由 ${track.requested_by || 'DJ'} 點播）`;
+          if (this.openInSpotifyBtn) {
+            this.openInSpotifyBtn.href = track.spotify_url || `https://open.spotify.com/track/${track.id}`;
+          }
+          if (this.voiceMiniTrack) {
+            this.voiceMiniTrack.textContent = `🎵 ${track.title}`;
+          }
+          if (this.collabDjPlayingDot) {
+            this.collabDjPlayingDot.style.display = 'inline-block';
+          }
+        }
+
+        if (this.musicPlayerStatusTag) {
+          const isPlaying = mp.status === 'playing';
+          this.musicPlayerStatusTag.textContent = isPlaying ? '🟢 播放中' : '⏸️ 已暫停';
+          this.musicPlayerStatusTag.style.color = isPlaying ? '#10b981' : '#f59e0b';
+        }
+
+        if (this.musicPauseResumeBtn) {
+          this.musicPauseResumeBtn.textContent = mp.status === 'playing' ? '⏸️ 暫停' : '▶️ 繼續播放';
+        }
+      }
+
+      // 渲染待播清單
+      if (this.musicQueueList && Array.isArray(mp.queue)) {
+        if (this.musicQueueCount) this.musicQueueCount.textContent = mp.queue.length;
+        if (mp.queue.length === 0) {
+          this.musicQueueList.innerHTML = '<div class="queue-empty-tip">目前沒有排隊歌曲，快點一首歌來聽吧！</div>';
+        } else {
+          this.musicQueueList.innerHTML = '';
+          mp.queue.forEach((qItem, idx) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'queue-item';
+            itemEl.innerHTML = `
+              <div>
+                <span style="font-size: 11px; color: #94a3b8; margin-right: 6px;">#${idx + 1}</span>
+                <strong class="queue-item-title">${escapeHtml(qItem.title)}</strong>
+              </div>
+              <span class="queue-item-meta">${escapeHtml(qItem.artist || '')} · 點播: ${escapeHtml(qItem.requested_by || '組員')}</span>
+            `;
+            this.musicQueueList.appendChild(itemEl);
+          });
+        }
+      }
+    }
+
+    // 3. 同步通話內專屬 DJ 聊天室訊息
+    if (Array.isArray(data.new_voice_messages) && data.new_voice_messages.length > 0) {
+      data.new_voice_messages.forEach(msg => this.renderVoiceMessage(msg));
+      if (data.latest_voice_msg_id) {
+        this.lastVoiceMsgId = data.latest_voice_msg_id;
+      }
+    }
+  }
+
+  renderParticipants(parts) {
+    if (!this.voiceParticipantsList) return;
+
+    const djCard = this.voiceParticipantsList.querySelector('.voice-participant-card.dj-card');
+    this.voiceParticipantsList.innerHTML = '';
+    if (djCard) {
+      this.voiceParticipantsList.appendChild(djCard);
+    } else {
+      const djEl = document.createElement('div');
+      djEl.className = 'voice-participant-card dj-card';
+      djEl.innerHTML = `
+        <div class="voice-avatar-wrap">
+          <div class="voice-avatar dj-avatar">🎧</div>
+          <div class="voice-wave-ring dj-wave"></div>
+        </div>
+        <div class="voice-card-info">
+          <div class="voice-card-name">小白鯊 DJ</div>
+          <span class="voice-card-badge dj-role-badge">🤖 通話音樂機器人</span>
+        </div>
+        <div class="voice-card-status">
+          <span class="dj-music-notes">🎵 播放中</span>
+        </div>
+      `;
+      this.voiceParticipantsList.appendChild(djEl);
+    }
+
+    parts.forEach(p => {
+      const isSelf = p.user_id === this.userId;
+      const isSpeaking = isSelf ? this.isSpeaking : p.speaking;
+      const card = document.createElement('div');
+      card.className = `voice-participant-card ${isSpeaking ? 'speaking' : ''}`;
+      card.setAttribute('data-user-id', p.user_id);
+
+      const initial = (p.user_name || 'U').slice(0, 1).toUpperCase();
+      card.innerHTML = `
+        <div class="voice-avatar-wrap">
+          <div class="voice-avatar" style="background-color: ${p.color || '#0284c7'};">${initial}</div>
+          <div class="voice-wave-ring"></div>
+        </div>
+        <div class="voice-card-info">
+          <div class="voice-card-name" title="${escapeHtml(p.user_name)}">${escapeHtml(p.user_name)}</div>
+          ${isSelf ? '<span class="voice-card-badge host-badge">你</span>' : ''}
+        </div>
+        <div class="voice-card-status">
+          ${p.muted ? '<span class="voice-status-mute-icon">🔇 靜音</span>' : '<span class="voice-status-speak-icon">🎤 開麥</span>'}
+        </div>
+      `;
+      this.voiceParticipantsList.appendChild(card);
+    });
+  }
+
+  renderVoiceMessage(msg) {
+    if (this.renderedVoiceMsgIds.has(msg.id)) return;
+    this.renderedVoiceMsgIds.add(msg.id);
+
+    if (!this.voiceDjMessages) return;
+
+    const card = document.createElement('div');
+    const isSelf = msg.user_id === this.userId;
+    const isDj = msg.is_dj;
+    const isRefusal = msg.action === 'refusal';
+
+    card.className = `dj-msg-card ${isDj ? 'dj' : 'user'} ${isRefusal ? 'refusal' : ''}`;
+
+    const dateStr = msg.timestamp ? new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+    let contentHtml = escapeHtml(msg.text);
+    contentHtml = contentHtml
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br/>');
+
+    let trackHtml = '';
+    if (msg.track) {
+      trackHtml = `
+        <div style="margin-top: 8px; padding: 6px 10px; background: rgba(0,0,0,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+          <div>
+            <strong>🎵 ${escapeHtml(msg.track.title)}</strong> - <span>${escapeHtml(msg.track.artist || '')}</span>
+          </div>
+          ${msg.track.spotify_url ? `<a href="${msg.track.spotify_url}" target="_blank" rel="noopener noreferrer" style="color: #1ed760; font-weight: 700; text-decoration: none;">Spotify ↗</a>` : ''}
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="dj-msg-header">
+        <span class="dj-msg-name">${escapeHtml(msg.user_name || (isDj ? '小白鯊 DJ 🎧' : '組員'))}</span>
+        <span class="dj-msg-time">${dateStr}</span>
+      </div>
+      <div class="dj-msg-body">${contentHtml}</div>
+      ${trackHtml}
+    `;
+
+    this.voiceDjMessages.appendChild(card);
+    this.voiceDjMessages.scrollTop = this.voiceDjMessages.scrollHeight;
+  }
+
+  async handleMusicSearch() {
+    if (!this.roomId) {
+      alert('請先進入專案連機房間！');
+      return;
+    }
+    const query = this.musicSearchInput ? this.musicSearchInput.value.trim() : '';
+    if (!query) {
+      alert('請輸入歌名、歌手或 Spotify 連結！');
+      return;
+    }
+
+    try {
+      if (this.musicSearchBtn) this.musicSearchBtn.disabled = true;
+      const res = await fetch('/api/collab/music/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          user_id: this.userId,
+          user_name: this.userName,
+          query: query
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (this.musicSearchInput) this.musicSearchInput.value = '';
+        if (collabController) collabController.pollSync();
+      } else {
+        alert('點播失敗：' + (data.error || '無法解析歌曲'));
+      }
+    } catch (e) {
+      alert('點播失敗：' + e.message);
+    } finally {
+      if (this.musicSearchBtn) this.musicSearchBtn.disabled = false;
+    }
+  }
+
+  async handleMusicControl(action) {
+    if (!this.roomId) return;
+    let actualAction = action;
+    if (action === 'pause_resume') {
+      const isCurrentlyPlaying = this.currentTrack && (!this.musicPlayerStatusTag || this.musicPlayerStatusTag.textContent.includes('播放中'));
+      actualAction = isCurrentlyPlaying ? 'pause' : 'resume';
+    }
+
+    try {
+      const res = await fetch('/api/collab/music/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          action: actualAction
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (collabController) collabController.pollSync();
+      }
+    } catch (e) {
+      console.warn('音樂控制失敗：', e);
+    }
+  }
+
+  async handleDjChatSubmit() {
+    if (!this.voiceDjInput) return;
+    const text = this.voiceDjInput.value.trim();
+    if (!text) return;
+    this.voiceDjInput.value = '';
+    await this.sendDjMessage(text);
+  }
+
+  async sendDjMessage(text) {
+    if (!this.roomId) {
+      alert('請先加入專案連機房間！');
+      return;
+    }
+    try {
+      const res = await fetch('/api/collab/dj/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id: this.roomId,
+          user_id: this.userId,
+          user_name: this.userName,
+          text: text
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (collabController) collabController.pollSync();
+      } else {
+        alert('發送訊息失敗：' + (data.error || '請重試'));
+      }
+    } catch (e) {
+      alert('發送訊息失敗：' + e.message);
+    }
+  }
+
+  async loadPresets() {
+    try {
+      const res = await fetch('/api/collab/music/presets');
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.presets)) {
+        this.presets = data.presets;
+        if (this.musicPresetsContainer) {
+          this.musicPresetsContainer.innerHTML = '';
+          this.presets.forEach(p => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'music-preset-pill';
+            btn.innerHTML = `🎵 ${escapeHtml(p.title)} (${escapeHtml(p.category || '熱門')})`;
+            btn.addEventListener('click', () => {
+              if (this.roomId) {
+                fetch('/api/collab/music/play', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    room_id: this.roomId,
+                    user_id: this.userId,
+                    user_name: this.userName,
+                    track: p
+                  })
+                }).then(() => {
+                  if (collabController) collabController.pollSync();
+                });
+              } else {
+                alert('請先加入連機房間！');
+              }
+            });
+            this.musicPresetsContainer.appendChild(btn);
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('載入精選音樂庫失敗：', e);
+    }
+  }
+}
+
+// 實例化並全域掛載語音通話與音樂 DJ 控制器
+const voiceController = new VoiceAndMusicController();
+window.voiceController = voiceController;
+voiceController.init();
 
 // ==========================================
 // 10. 前後端系統架構與狀態監控控制器 (Architecture & Backend Status)

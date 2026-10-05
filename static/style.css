@@ -2735,6 +2735,810 @@ button { cursor: pointer; }
   }
 }
 
+/* =========================================================
+   11. 專案連機語音通話 (Voice Channel) 與 Spotify 音樂 DJ Lounge 樣式
+   ========================================================= */
 
+.collab-action-btn.voice {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.3);
+}
 
+.collab-action-btn.voice:hover {
+  background: rgba(16, 185, 129, 0.22);
+  color: #047857;
+}
 
+.collab-action-btn.voice.in-call {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+  animation: voiceBarPulse 2s infinite ease-in-out;
+}
+
+@keyframes voiceBarPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
+}
+
+.collab-voice-badge {
+  background: #059669;
+  color: #ffffff;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  margin-left: 3px;
+}
+
+.collab-action-btn.voice.in-call .collab-voice-badge {
+  background: #ffffff;
+  color: #059669;
+}
+
+.collab-action-btn.dj {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.collab-action-btn.dj:hover {
+  background: rgba(139, 92, 246, 0.22);
+  color: #6d28d9;
+}
+
+.collab-dj-dot {
+  color: #10b981;
+  font-size: 8px;
+  margin-left: 2px;
+  animation: djDotBlink 1.2s infinite;
+}
+
+@keyframes djDotBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+.collab-voice-quick-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ede9fe 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  gap: 12px;
+}
+
+.collab-voice-quick-info strong {
+  display: block;
+  font-size: 14px;
+  color: #065f46;
+}
+
+.collab-voice-quick-info p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+/* 語音與音樂 Modal 卡片 */
+.voice-modal-card {
+  max-width: 820px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+  background: #ffffff;
+}
+
+.voice-modal-subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+/* 通話頂部狀態與操作列 */
+.voice-channel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.voice-channel-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-status-tag {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.voice-status-tag.online {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.voice-status-tag.offline {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.voice-ping-tag {
+  font-size: 11px;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-family: monospace;
+}
+
+.voice-channel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-btn.primary {
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.voice-btn.primary:hover {
+  background: #059669;
+}
+
+.voice-btn.danger {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.voice-btn.danger:hover {
+  background: #dc2626;
+}
+
+.voice-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.voice-tool-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.voice-tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voice-tool-btn.muted {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* 成員舞台 (Voice Stage) */
+.voice-stage-container {
+  background: #0f172a;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  color: #ffffff;
+}
+
+.voice-stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+}
+
+.voice-stage-title {
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.voice-stage-tip {
+  font-size: 11px;
+  color: #38bdf8;
+}
+
+.voice-participants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 12px;
+}
+
+.voice-participant-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.voice-participant-card:hover {
+  transform: translateY(-2px);
+  border-color: #475569;
+}
+
+.voice-participant-card.dj-card {
+  background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%);
+  border-color: #6366f1;
+}
+
+.voice-avatar-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+}
+
+.voice-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.voice-avatar.dj-avatar {
+  background: #ec4899;
+  font-size: 24px;
+}
+
+.voice-wave-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 說話中的即時聲波呼吸環 */
+.voice-participant-card.speaking .voice-wave-ring {
+  animation: speakRipple 1.4s infinite ease-out;
+}
+
+@keyframes speakRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.85);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.voice-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-card-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.voice-card-badge.dj-role-badge {
+  background: #ec4899;
+  color: #ffffff;
+}
+
+.voice-card-badge.host-badge {
+  background: #f59e0b;
+  color: #78350f;
+}
+
+.voice-card-status {
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.voice-status-mute-icon {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.voice-status-speak-icon {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.dj-music-notes {
+  color: #f472b6;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* 雙分頁樣式 */
+.voice-lounge-tabs {
+  margin-bottom: 14px;
+}
+
+/* Spotify 音樂播放台 */
+.now-playing-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.now-playing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.now-playing-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0284c7;
+  letter-spacing: 1px;
+}
+
+.music-player-status {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.spotify-embed-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+  background: #000000;
+}
+
+.spotify-embed-iframe {
+  display: block;
+  border: 0;
+  width: 100%;
+  height: 152px;
+}
+
+.now-playing-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+}
+
+.now-playing-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.now-playing-title {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.now-playing-artist {
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.now-playing-requester {
+  font-size: 11px;
+  color: #8b5cf6;
+  margin-top: 2px;
+}
+
+.spotify-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #121212;
+  color: #1ed760;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.spotify-external-link:hover {
+  background: #282828;
+  color: #1fdf64;
+  transform: scale(1.02);
+}
+
+.music-controls-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.music-ctrl-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.music-ctrl-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.music-ctrl-btn.danger {
+  color: #ef4444;
+  border-color: #fca5a5;
+  margin-left: auto;
+}
+
+.music-ctrl-btn.danger:hover {
+  background: #fee2e2;
+}
+
+.music-request-section {
+  margin-bottom: 14px;
+}
+
+.music-search-bar {
+  display: flex;
+  gap: 8px;
+}
+
+.music-presets-section {
+  margin-bottom: 14px;
+}
+
+.music-presets-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.music-presets-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.music-preset-pill {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.music-preset-pill:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
+.music-queue-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.music-queue-header {
+  margin-bottom: 8px;
+}
+
+.music-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.queue-empty-tip {
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 6px 0;
+  text-align: center;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+
+.queue-item-title {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.queue-item-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* DJ 機器人對話與提示 */
+.dj-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.dj-notice-icon {
+  font-size: 20px;
+}
+
+.dj-notice-text {
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.voice-dj-messages-box {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 12px;
+  height: 240px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dj-msg-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dj-msg-card.dj {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.dj-msg-card.dj.refusal {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.dj-msg-card.user {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.dj-msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.dj-msg-name {
+  color: #6d28d9;
+}
+
+.dj-msg-card.user .dj-msg-name {
+  color: #0284c7;
+}
+
+.dj-msg-time {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.dj-msg-body {
+  color: #1e293b;
+  white-space: pre-wrap;
+}
+
+.dj-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dj-quick-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dj-quick-btn:hover {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+
+.voice-dj-input-form {
+  display: flex;
+  gap: 8px;
+}
+
+/* 常駐迷你懸浮球 (Voice Mini Dock) */
+.voice-mini-dock {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
+
+.voice-mini-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+}
+
+.voice-mini-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: miniPulse 1.5s infinite;
+}
+
+@keyframes miniPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.voice-mini-info strong {
+  display: block;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.voice-mini-info span {
+  font-size: 10.5px;
+  color: #94a3b8;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.voice-mini-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.mini-icon-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.mini-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
