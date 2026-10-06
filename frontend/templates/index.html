@@ -56,14 +56,25 @@
           <button id="syncButton" class="login-btn sync-btn" type="button" title="手機掃碼同步連線">
             <span><span class="btn-icon">📱</span><span class="btn-text"> 手機掃碼同步</span></span>
           </button>
-          <button id="loginButton" class="login-btn google-login-topbar-btn" type="button">
-            <svg class="google-icon" viewBox="0 0 24 24" width="16" height="16">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span class="btn-text">Google 登入</span>
+          <button id="loginButton" class="login-btn auth-login-topbar-btn" type="button" title="登入帳號（支援 Google、Apple、Windows 登入）">
+            <div class="auth-btn-icons">
+              <svg class="google-icon-mini" viewBox="0 0 24 24" width="14" height="14">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <svg class="apple-icon-mini" viewBox="0 0 170 170" width="13" height="13" fill="currentColor">
+                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.8-11.72-14.28-5.34-8.35-9.61-17.77-12.8-28.26-3.2-10.49-4.8-20.67-4.8-30.56 0-14.12 3.6-26.04 10.81-35.75 7.21-9.72 16.51-14.67 27.91-14.87 5.03 0 10.45 1.25 16.27 3.76 5.82 2.5 9.77 3.86 11.87 4.07 1.83-.21 5.92-1.63 12.27-4.27 6.35-2.63 11.97-3.87 16.86-3.71 13.06.63 23.36 5.43 30.91 14.39-11.36 6.89-16.94 16.32-16.73 28.3.21 9.4 3.92 17.29 11.13 23.68 7.21 6.39 15.77 10.02 25.68 10.9-2.12 6.55-4.57 12.77-7.34 18.66zM119.22 33.15c0-7.33 2.66-14.23 7.97-20.7 5.32-6.47 11.85-10.59 19.6-12.35.21 1.05.31 2.05.31 3 0 7.33-2.77 14.36-8.3 21.09-5.54 6.72-12.09 10.66-19.66 11.82-.1-1-.22-2-.22-2.86z"/>
+              </svg>
+              <svg class="windows-icon-mini" viewBox="0 0 24 24" width="13" height="13">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+              </svg>
+            </div>
+            <span class="btn-text">登入帳號</span>
           </button>
           <div id="userProfile" class="user-profile" style="display: none;">
             <div class="user-avatar-wrap">
@@ -362,88 +373,202 @@
       <footer class="footer"><span>POWERED BY GEMINI API</span><span>LOCAL / PRIVATE BY DEFAULT</span></footer>
     </div>
 
-    <!-- Google 帳號登入 / 選擇帳戶 Modal -->
+    <!-- 帳號登入 / 選擇帳戶 Modal (支援 Google / Apple / Windows) -->
     <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-card google-modal-card">
-        <!-- 頂部 Google 標誌與關閉按鈕 -->
-        <div class="google-modal-top">
-          <svg class="google-logo-svg" viewBox="0 0 24 24" width="28" height="28">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
+      <div class="modal-card auth-modal-card">
+        <!-- 頂部多品牌標誌與關閉按鈕 -->
+        <div class="auth-modal-header">
+          <div class="auth-modal-brands">
+            <svg class="google-logo-svg" viewBox="0 0 24 24" width="22" height="22" title="Google">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span class="auth-brand-sep">/</span>
+            <svg class="apple-logo-svg" viewBox="0 0 170 170" width="20" height="20" fill="#111827" title="Apple ID">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.8-11.72-14.28-5.34-8.35-9.61-17.77-12.8-28.26-3.2-10.49-4.8-20.67-4.8-30.56 0-14.12 3.6-26.04 10.81-35.75 7.21-9.72 16.51-14.67 27.91-14.87 5.03 0 10.45 1.25 16.27 3.76 5.82 2.5 9.77 3.86 11.87 4.07 1.83-.21 5.92-1.63 12.27-4.27 6.35-2.63 11.97-3.87 16.86-3.71 13.06.63 23.36 5.43 30.91 14.39-11.36 6.89-16.94 16.32-16.73 28.3.21 9.4 3.92 17.29 11.13 23.68 7.21 6.39 15.77 10.02 25.68 10.9-2.12 6.55-4.57 12.77-7.34 18.66zM119.22 33.15c0-7.33 2.66-14.23 7.97-20.7 5.32-6.47 11.85-10.59 19.6-12.35.21 1.05.31 2.05.31 3 0 7.33-2.77 14.36-8.3 21.09-5.54 6.72-12.09 10.66-19.66 11.82-.1-1-.22-2-.22-2.86z"/>
+            </svg>
+            <span class="auth-brand-sep">/</span>
+            <svg class="windows-logo-svg" viewBox="0 0 24 24" width="20" height="20" title="Microsoft / Windows">
+              <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+              <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+              <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+              <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+            </svg>
+          </div>
           <button id="closeLoginModal" class="modal-close-btn" type="button" aria-label="關閉視窗">✕</button>
         </div>
 
-        <h3 id="modalTitle" class="google-modal-title">選擇帳戶</h3>
-        <p class="google-modal-subtitle">以登入或註冊並繼續前往 Prompt Atelier</p>
+        <h3 id="modalTitle" class="google-modal-title">選擇登入方式</h3>
+        <p class="google-modal-subtitle">支援 Google、Apple ID 與 Windows 帳戶登入 Prompt Atelier</p>
 
-        <!-- Google 帳戶清單區塊（完全比照 Google 官方登入設計） -->
-        <div id="googleAccountsBox" class="google-accounts-box">
-          <!-- 預設已偵測到的 Google 帳號 (來自使用者截圖 413076吳奕璿) -->
-          <button type="button" id="googlePrimaryAccountBtn" class="google-account-row">
-            <div class="google-row-avatar-wrap">
-              <img src="/static/google_avatar.png" alt="Google 頭像" class="google-row-avatar" />
-            </div>
-            <div class="google-row-details">
-              <div class="google-row-name">413076吳奕璿</div>
-              <div class="google-row-email">hs413076@ms.nnkieh.tn.edu.tw</div>
-            </div>
-            <span class="google-row-status">按一下登入</span>
+        <!-- 登入渠道切換頁籤 -->
+        <div class="auth-provider-tabs">
+          <button type="button" id="authTabGoogleBtn" class="auth-tab-btn active" data-tab="google">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Google</span>
           </button>
+          <button type="button" id="authTabAppleBtn" class="auth-tab-btn" data-tab="apple">
+            <svg viewBox="0 0 170 170" width="15" height="15" fill="currentColor"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.8-11.72-14.28-5.34-8.35-9.61-17.77-12.8-28.26-3.2-10.49-4.8-20.67-4.8-30.56 0-14.12 3.6-26.04 10.81-35.75 7.21-9.72 16.51-14.67 27.91-14.87 5.03 0 10.45 1.25 16.27 3.76 5.82 2.5 9.77 3.86 11.87 4.07 1.83-.21 5.92-1.63 12.27-4.27 6.35-2.63 11.97-3.87 16.86-3.71 13.06.63 23.36 5.43 30.91 14.39-11.36 6.89-16.94 16.32-16.73 28.3.21 9.4 3.92 17.29 11.13 23.68 7.21 6.39 15.77 10.02 25.68 10.9-2.12 6.55-4.57 12.77-7.34 18.66zM119.22 33.15c0-7.33 2.66-14.23 7.97-20.7 5.32-6.47 11.85-10.59 19.6-12.35.21 1.05.31 2.05.31 3 0 7.33-2.77 14.36-8.3 21.09-5.54 6.72-12.09 10.66-19.66 11.82-.1-1-.22-2-.22-2.86z"/></svg>
+            <span>Apple</span>
+          </button>
+          <button type="button" id="authTabWindowsBtn" class="auth-tab-btn" data-tab="windows">
+            <svg viewBox="0 0 24 24" width="14" height="14"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+            <span>Windows</span>
+          </button>
+        </div>
 
-          <div class="google-box-divider"></div>
+        <!-- Panel 1: Google 帳號面板 -->
+        <div id="authPanelGoogle" class="auth-tab-panel active">
+          <div id="googleAccountsBox" class="google-accounts-box">
+            <button type="button" id="googlePrimaryAccountBtn" class="google-account-row">
+              <div class="google-row-avatar-wrap">
+                <img src="/static/google_avatar.png" alt="Google 頭像" class="google-row-avatar" />
+              </div>
+              <div class="google-row-details">
+                <div class="google-row-name">413076吳奕璿</div>
+                <div class="google-row-email">hs413076@ms.nnkieh.tn.edu.tw</div>
+              </div>
+              <span class="google-row-status">按一下登入</span>
+            </button>
+            <div class="google-box-divider"></div>
+            <button type="button" id="googleUseOtherBtn" class="google-account-row google-action-row">
+              <div class="google-row-icon-wrap">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+              </div>
+              <div class="google-row-details">
+                <div class="google-action-text">使用其他 Google 帳戶</div>
+              </div>
+            </button>
+          </div>
+          <form id="googleOtherForm" class="google-other-form" style="display: none;">
+            <div class="google-input-group">
+              <label for="googleCustomEmail">輸入您的 Google 帳戶（Gmail 或學校帳號）</label>
+              <input type="email" id="googleCustomEmail" placeholder="例如：yourname@gmail.com" required />
+            </div>
+            <div class="google-input-group">
+              <label for="googleCustomName">Google 顯示名稱</label>
+              <input type="text" id="googleCustomName" placeholder="例如：吳奕璿" required />
+            </div>
+            <div class="google-form-actions">
+              <button type="button" id="googleCancelOtherBtn" class="google-btn-cancel">返回</button>
+              <button type="submit" class="google-btn-submit">下一步</button>
+            </div>
+          </form>
+          <div id="googleSignInBtnContainer" class="google-signin-btn-container"></div>
+        </div>
 
-          <!-- 使用其他 Google 帳戶按鈕 -->
-          <button type="button" id="googleUseOtherBtn" class="google-account-row google-action-row">
-            <div class="google-row-icon-wrap">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        <!-- Panel 2: Apple ID 面板 -->
+        <div id="authPanelApple" class="auth-tab-panel" style="display: none;">
+          <div class="apple-accounts-box">
+            <button type="button" id="applePrimaryAccountBtn" class="apple-primary-btn">
+              <svg viewBox="0 0 170 170" width="20" height="20" fill="#ffffff">
+                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.8-11.72-14.28-5.34-8.35-9.61-17.77-12.8-28.26-3.2-10.49-4.8-20.67-4.8-30.56 0-14.12 3.6-26.04 10.81-35.75 7.21-9.72 16.51-14.67 27.91-14.87 5.03 0 10.45 1.25 16.27 3.76 5.82 2.5 9.77 3.86 11.87 4.07 1.83-.21 5.92-1.63 12.27-4.27 6.35-2.63 11.97-3.87 16.86-3.71 13.06.63 23.36 5.43 30.91 14.39-11.36 6.89-16.94 16.32-16.73 28.3.21 9.4 3.92 17.29 11.13 23.68 7.21 6.39 15.77 10.02 25.68 10.9-2.12 6.55-4.57 12.77-7.34 18.66zM119.22 33.15c0-7.33 2.66-14.23 7.97-20.7 5.32-6.47 11.85-10.59 19.6-12.35.21 1.05.31 2.05.31 3 0 7.33-2.77 14.36-8.3 21.09-5.54 6.72-12.09 10.66-19.66 11.82-.1-1-.22-2-.22-2.86z"/>
               </svg>
+              <span>使用 Apple 登入 (Sign in with Apple)</span>
+            </button>
+            <div class="apple-card-info-box">
+              <div class="apple-detected-account">
+                <div class="apple-avatar-badge"></div>
+                <div class="apple-account-text">
+                  <strong>吳奕璿 (Apple ID)</strong>
+                  <span>yixuan.wu@icloud.com</span>
+                </div>
+                <button type="button" id="appleQuickLoginBtn" class="apple-quick-btn">快速登入</button>
+              </div>
             </div>
-            <div class="google-row-details">
-              <div class="google-action-text">使用其他 Google 帳戶</div>
+            <button type="button" id="appleUseOtherBtn" class="google-account-row google-action-row apple-action-row">
+              <div class="google-row-icon-wrap" style="background: #000; color: #fff;">
+                <span style="font-size: 15px; font-weight: 700;"></span>
+              </div>
+              <div class="google-row-details">
+                <div class="google-action-text">使用自訂 Apple ID 登入</div>
+              </div>
+            </button>
+          </div>
+          <form id="appleOtherForm" class="google-other-form apple-other-form" style="display: none;">
+            <div class="google-input-group">
+              <label for="appleCustomEmail">輸入您的 Apple ID（iCloud 郵件）</label>
+              <input type="email" id="appleCustomEmail" placeholder="例如：yourname@icloud.com" required />
             </div>
-          </button>
+            <div class="google-input-group">
+              <label for="appleCustomName">Apple 顯示名稱</label>
+              <input type="text" id="appleCustomName" placeholder="例如：吳奕璿" required />
+            </div>
+            <div class="google-form-actions">
+              <button type="button" id="appleCancelOtherBtn" class="google-btn-cancel">返回</button>
+              <button type="submit" class="apple-btn-submit">使用此 Apple ID 登入</button>
+            </div>
+          </form>
+        </div>
 
-          <div class="google-box-divider"></div>
+        <!-- Panel 3: Windows / Microsoft 帳號面板 -->
+        <div id="authPanelWindows" class="auth-tab-panel" style="display: none;">
+          <div class="windows-accounts-box">
+            <button type="button" id="windowsPrimaryAccountBtn" class="windows-primary-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+              </svg>
+              <span>使用 Windows / Microsoft 帳戶登入</span>
+            </button>
+            <div class="windows-card-info-box">
+              <div class="windows-detected-account">
+                <div class="windows-avatar-badge">⊞</div>
+                <div class="windows-account-text">
+                  <strong>吳奕璿 (Windows Hello)</strong>
+                  <span>yixuan.wu@outlook.com</span>
+                </div>
+                <button type="button" id="windowsQuickLoginBtn" class="windows-quick-btn">快速登入</button>
+              </div>
+            </div>
+            <button type="button" id="windowsUseOtherBtn" class="google-account-row google-action-row windows-action-row">
+              <div class="google-row-icon-wrap" style="background: #0078d4; color: #fff;">
+                <span style="font-size: 15px; font-weight: 700;">⊞</span>
+              </div>
+              <div class="google-row-details">
+                <div class="google-action-text">使用其他 Microsoft / Windows 帳戶</div>
+              </div>
+            </button>
+          </div>
+          <form id="windowsOtherForm" class="google-other-form windows-other-form" style="display: none;">
+            <div class="google-input-group">
+              <label for="windowsCustomEmail">輸入 Microsoft 帳戶（Outlook / Hotmail / 學校帳號）</label>
+              <input type="email" id="windowsCustomEmail" placeholder="例如：yourname@outlook.com" required />
+            </div>
+            <div class="google-input-group">
+              <label for="windowsCustomName">Windows 顯示名稱</label>
+              <input type="text" id="windowsCustomName" placeholder="例如：吳奕璿" required />
+            </div>
+            <div class="google-form-actions">
+              <button type="button" id="windowsCancelOtherBtn" class="google-btn-cancel">返回</button>
+              <button type="submit" class="windows-btn-submit">登入 Windows 帳戶</button>
+            </div>
+          </form>
+        </div>
 
-          <!-- 移除帳戶 -->
-          <button type="button" id="googleRemoveAccountBtn" class="google-account-row google-action-row">
+        <!-- 帳戶登出移除共用按鈕 -->
+        <div id="authAccountRemovalArea" style="margin-top: 14px;">
+          <button type="button" id="googleRemoveAccountBtn" class="google-account-row google-action-row" style="border: 1px solid #dadce0; border-radius: 12px;">
             <div class="google-row-icon-wrap">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
               </svg>
             </div>
             <div class="google-row-details">
-              <div class="google-action-text">登出 / 移除此裝置上的帳戶</div>
+              <div class="google-action-text">登出 / 移除此裝置上的已登入帳戶</div>
             </div>
           </button>
         </div>
 
-        <!-- 使用其他帳戶時展開的 Google 輸入表單 -->
-        <form id="googleOtherForm" class="google-other-form" style="display: none;">
-          <div class="google-input-group">
-            <label for="googleCustomEmail">輸入您的 Google 帳戶（Gmail 或學校帳號）</label>
-            <input type="email" id="googleCustomEmail" placeholder="例如：yourname@gmail.com" required />
-          </div>
-          <div class="google-input-group">
-            <label for="googleCustomName">Google 顯示名稱</label>
-            <input type="text" id="googleCustomName" placeholder="例如：吳奕璿" required />
-          </div>
-          <div class="google-form-actions">
-            <button type="button" id="googleCancelOtherBtn" class="google-btn-cancel">返回</button>
-            <button type="submit" class="google-btn-submit">下一步</button>
-          </div>
-        </form>
-
-        <!-- 官方 Google GIS 容器 (選填，若有 client_id 會自動渲染) -->
-        <div id="googleSignInBtnContainer" class="google-signin-btn-container"></div>
-
         <!-- 底部隱私協議文字 -->
         <p class="google-modal-footer-note">
-          若要繼續，Google 會將您的名稱、電子郵件地址與頭像提供給 Prompt Atelier。在開始使用 Prompt Atelier 前，請先詳閱相關的隱私權政策與服務條款。
+          若要繼續，您授權的登入平台（Google、Apple 或 Microsoft）會將您的帳號名稱與電子郵件安全提供給 Prompt Atelier。在開始使用前，請先詳閱隱私權保護條款。
         </p>
       </div>
     </div>

@@ -50,8 +50,10 @@ button { cursor: pointer; }
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
 .login-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 18px; font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: .03em; border-radius: 6px; transition: all .2s ease; cursor: pointer; white-space: nowrap; }
 .login-btn:hover { background: #0284c7; color: #ffffff; border-color: #0284c7; }
-.google-login-topbar-btn { background: #ffffff; color: var(--ink); border: 1px solid #cce0f2; border-radius: 6px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08); }
-.google-login-topbar-btn:hover { background: #f0f7ff; border-color: #7dd3fc; color: #0284c7; }
+.google-login-topbar-btn, .auth-login-topbar-btn { background: #ffffff; color: var(--ink); border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+.google-login-topbar-btn:hover, .auth-login-topbar-btn:hover { background: #f8fafc; border-color: #94a3b8; color: #0284c7; }
+.auth-btn-icons { display: inline-flex; align-items: center; gap: 4px; margin-right: 2px; }
+.apple-icon-mini { color: #111827; }
 .sync-btn { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; border-radius: 6px; font-weight: 600; }
 .sync-btn:hover { background: #0284c7; color: #ffffff; border-color: #0284c7; }
 .user-profile { display: flex; align-items: center; gap: 10px; }
@@ -659,6 +661,54 @@ button { cursor: pointer; }
 .google-signin-btn-container { width: 100%; display: flex; justify-content: center; margin-bottom: 14px; }
 .google-signin-btn-container:empty { display: none; }
 .google-modal-footer-note { font-size: 11px; color: #747775; line-height: 1.5; margin: 0; border-top: 1px solid #f1f3f4; padding-top: 14px; }
+
+/* 多平台登入模態框樣式 */
+.auth-modal-card { width: min(470px, calc(100vw - 32px)); }
+.auth-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.auth-modal-brands { display: inline-flex; align-items: center; gap: 8px; }
+.auth-brand-sep { color: #cbd5e1; font-size: 14px; }
+.auth-provider-tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 18px; }
+.auth-tab-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: #64748b; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.18s ease; font-family: inherit; }
+.auth-tab-btn:hover { color: #1e293b; background: rgba(255, 255, 255, 0.5); }
+.auth-tab-btn.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.auth-tab-panel { animation: modalFadeIn 0.2s ease; }
+
+/* Apple 專屬樣式 */
+.apple-accounts-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.apple-primary-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #000000; color: #ffffff; border: 0; border-radius: 12px; padding: 13px 20px; font-size: 14.5px; font-weight: 600; cursor: pointer; transition: background-color 0.18s ease, transform 0.15s ease; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.apple-primary-btn:hover { background: #1f1f1f; transform: translateY(-1px); }
+.apple-card-info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; }
+.apple-detected-account { display: flex; align-items: center; gap: 12px; }
+.apple-avatar-badge { width: 38px; height: 38px; border-radius: 50%; background: #000000; color: #ffffff; display: grid; place-items: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.apple-account-text { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
+.apple-account-text strong { font-size: 14px; color: #0f172a; font-weight: 600; }
+.apple-account-text span { font-size: 12px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apple-quick-btn { background: #000000; color: #ffffff; border: 0; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.apple-quick-btn:hover { opacity: 0.85; }
+.apple-action-row:hover { background-color: #f8fafc; }
+.apple-btn-submit { background: #000000; color: #ffffff; border: 0; border-radius: 999px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.apple-btn-submit:hover { opacity: 0.85; }
+
+/* Windows 專屬樣式 */
+.windows-accounts-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.windows-primary-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.18s ease; font-family: "Segoe UI", system-ui, sans-serif; }
+.windows-primary-btn:hover { background: #f1f5f9; border-color: #0078d4; color: #0078d4; }
+.windows-card-info-box { background: #f0f7ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 12px 16px; }
+.windows-detected-account { display: flex; align-items: center; gap: 12px; }
+.windows-avatar-badge { width: 38px; height: 38px; border-radius: 50%; background: #0078d4; color: #ffffff; display: grid; place-items: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.windows-account-text { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
+.windows-account-text strong { font-size: 14px; color: #0f172a; font-weight: 600; }
+.windows-account-text span { font-size: 12px; color: #0284c7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.windows-quick-btn { background: #0078d4; color: #ffffff; border: 0; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background-color 0.15s; }
+.windows-quick-btn:hover { background: #005a9e; }
+.windows-action-row:hover { background-color: #f0f7ff; }
+.windows-btn-submit { background: #0078d4; color: #ffffff; border: 0; border-radius: 999px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 0.15s; }
+.windows-btn-submit:hover { background: #005a9e; }
+
+/* 登入後 Badge 與 Provider 主題 */
+.google-badge.apple-badge { background: #000000 !important; color: #ffffff !important; }
+.google-badge.windows-badge { background: #0078d4 !important; color: #ffffff !important; }
+.google-badge.google-badge { background: #0b57d0 !important; color: #ffffff !important; }
 .modal-close-btn { background: transparent; border: 0; font-size: 18px; color: #5f6368; cursor: pointer; padding: 4px 8px; border-radius: 50%; transition: background-color .15s; }
 .modal-close-btn:hover { background-color: #f1f3f4; color: #202124; }
 .sync-modal-card { text-align: center; width: min(420px, calc(100vw - 32px)); }

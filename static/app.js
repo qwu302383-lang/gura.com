@@ -146,11 +146,28 @@ function updateAuthUI() {
     }
 
     if (googleBadge) {
-      googleBadge.style.display = user.provider === 'google' ? 'grid' : 'none';
+      googleBadge.style.display = 'grid';
+      if (user.provider === 'apple') {
+        googleBadge.className = 'google-badge apple-badge';
+        googleBadge.textContent = '';
+        googleBadge.title = '已連結 Apple ID 帳號';
+      } else if (user.provider === 'windows') {
+        googleBadge.className = 'google-badge windows-badge';
+        googleBadge.textContent = '⊞';
+        googleBadge.title = '已連結 Windows / Microsoft 帳戶';
+      } else {
+        googleBadge.className = 'google-badge google-badge';
+        googleBadge.textContent = 'G';
+        googleBadge.title = '已連結 Google 帳號';
+      }
     }
 
-    if (user.picture) {
-      userAvatarImg.src = user.picture;
+    const defaultPic = user.provider === 'apple' 
+      ? '/static/apple_avatar.svg' 
+      : (user.provider === 'windows' ? '/static/windows_avatar.svg' : '/static/google_avatar.png');
+
+    if (user.picture || defaultPic) {
+      userAvatarImg.src = user.picture || defaultPic;
       userAvatarImg.style.display = 'block';
       userAvatar.style.display = 'none';
     } else {
@@ -176,6 +193,14 @@ function updateAuthUI() {
       sidebarUserAvatarImg.src = user.picture;
       sidebarUserAvatarImg.style.display = 'block';
       sidebarUserAvatarFallback.style.display = 'none';
+    } else if (user && user.provider === 'apple') {
+      sidebarUserAvatarImg.src = '/static/apple_avatar.svg';
+      sidebarUserAvatarImg.style.display = 'block';
+      sidebarUserAvatarFallback.style.display = 'none';
+    } else if (user && user.provider === 'windows') {
+      sidebarUserAvatarImg.src = '/static/windows_avatar.svg';
+      sidebarUserAvatarImg.style.display = 'block';
+      sidebarUserAvatarFallback.style.display = 'none';
     } else {
       sidebarUserAvatarImg.src = '/static/google_avatar.png';
       sidebarUserAvatarImg.style.display = 'block';
@@ -184,12 +209,76 @@ function updateAuthUI() {
   }
 }
 
+function switchAuthTab(tab) {
+  const targetTab = (tab === 'apple' || tab === 'windows') ? tab : 'google';
+
+  const tabButtons = {
+    google: document.querySelector('#authTabGoogleBtn'),
+    apple: document.querySelector('#authTabAppleBtn'),
+    windows: document.querySelector('#authTabWindowsBtn')
+  };
+
+  const tabPanels = {
+    google: document.querySelector('#authPanelGoogle'),
+    apple: document.querySelector('#authPanelApple'),
+    windows: document.querySelector('#authPanelWindows')
+  };
+
+  Object.keys(tabButtons).forEach((key) => {
+    const btn = tabButtons[key];
+    const panel = tabPanels[key];
+    if (btn) {
+      if (key === targetTab) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+    if (panel) {
+      if (key === targetTab) {
+        panel.style.display = 'block';
+        panel.classList.add('active');
+      } else {
+        panel.style.display = 'none';
+        panel.classList.remove('active');
+      }
+    }
+  });
+
+  if (targetTab === 'google') {
+    initGoogleAuth();
+  }
+}
+
 function openLoginModal() {
   loginModal.style.display = 'flex';
+  const user = getUser();
+  const preferredProvider = (user && user.provider) || 'google';
+  switchAuthTab(preferredProvider);
+
   if (googleAccountsBox) googleAccountsBox.style.display = 'block';
   if (googleOtherForm) googleOtherForm.style.display = 'none';
   if (googleCustomEmail) googleCustomEmail.value = '';
   if (googleCustomName) googleCustomName.value = '';
+
+  const appleAccountsBox = document.querySelector('.apple-accounts-box');
+  if (appleAccountsBox) appleAccountsBox.style.display = 'flex';
+  const appleOtherForm = document.querySelector('#appleOtherForm');
+  if (appleOtherForm) appleOtherForm.style.display = 'none';
+  const appleCustomEmailInput = document.querySelector('#appleCustomEmail');
+  if (appleCustomEmailInput) appleCustomEmailInput.value = '';
+  const appleCustomNameInput = document.querySelector('#appleCustomName');
+  if (appleCustomNameInput) appleCustomNameInput.value = '';
+
+  const windowsAccountsBox = document.querySelector('.windows-accounts-box');
+  if (windowsAccountsBox) windowsAccountsBox.style.display = 'flex';
+  const windowsOtherForm = document.querySelector('#windowsOtherForm');
+  if (windowsOtherForm) windowsOtherForm.style.display = 'none';
+  const windowsCustomEmailInput = document.querySelector('#windowsCustomEmail');
+  if (windowsCustomEmailInput) windowsCustomEmailInput.value = '';
+  const windowsCustomNameInput = document.querySelector('#windowsCustomName');
+  if (windowsCustomNameInput) windowsCustomNameInput.value = '';
+
   initGoogleAuth();
 }
 
@@ -314,6 +403,127 @@ if (googleRemoveAccountBtn) {
   googleRemoveAccountBtn.addEventListener('click', () => {
     removeUser();
     closeLoginModalFunc();
+  });
+}
+
+// 多平台登入頁籤切換監聽
+const authTabGoogleBtn = document.querySelector('#authTabGoogleBtn');
+const authTabAppleBtn = document.querySelector('#authTabAppleBtn');
+const authTabWindowsBtn = document.querySelector('#authTabWindowsBtn');
+
+if (authTabGoogleBtn) authTabGoogleBtn.addEventListener('click', () => switchAuthTab('google'));
+if (authTabAppleBtn) authTabAppleBtn.addEventListener('click', () => switchAuthTab('apple'));
+if (authTabWindowsBtn) authTabWindowsBtn.addEventListener('click', () => switchAuthTab('windows'));
+
+// Apple 登入互動事件
+const applePrimaryAccountBtn = document.querySelector('#applePrimaryAccountBtn');
+const appleQuickLoginBtn = document.querySelector('#appleQuickLoginBtn');
+const appleUseOtherBtn = document.querySelector('#appleUseOtherBtn');
+const appleCancelOtherBtn = document.querySelector('#appleCancelOtherBtn');
+const appleOtherForm = document.querySelector('#appleOtherForm');
+const appleCustomEmail = document.querySelector('#appleCustomEmail');
+const appleCustomName = document.querySelector('#appleCustomName');
+
+function loginWithApple(customName, customEmail) {
+  setUser({
+    name: customName || '吳奕璿 (Apple ID)',
+    email: customEmail || 'yixuan.wu@icloud.com',
+    picture: '/static/apple_avatar.svg',
+    provider: 'apple',
+    loginTime: Date.now()
+  });
+  closeLoginModalFunc();
+}
+
+if (applePrimaryAccountBtn) {
+  applePrimaryAccountBtn.addEventListener('click', () => loginWithApple());
+}
+if (appleQuickLoginBtn) {
+  appleQuickLoginBtn.addEventListener('click', () => loginWithApple());
+}
+
+if (appleUseOtherBtn) {
+  appleUseOtherBtn.addEventListener('click', () => {
+    const appleAccountsBox = document.querySelector('.apple-accounts-box');
+    if (appleAccountsBox) appleAccountsBox.style.display = 'none';
+    if (appleOtherForm) {
+      appleOtherForm.style.display = 'flex';
+      if (appleCustomEmail) appleCustomEmail.focus();
+    }
+  });
+}
+
+if (appleCancelOtherBtn) {
+  appleCancelOtherBtn.addEventListener('click', () => {
+    if (appleOtherForm) appleOtherForm.style.display = 'none';
+    const appleAccountsBox = document.querySelector('.apple-accounts-box');
+    if (appleAccountsBox) appleAccountsBox.style.display = 'flex';
+  });
+}
+
+if (appleOtherForm) {
+  appleOtherForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = appleCustomEmail ? appleCustomEmail.value.trim() : '';
+    if (!email) return;
+    const name = (appleCustomName && appleCustomName.value.trim()) || email.split('@')[0];
+    loginWithApple(name, email);
+  });
+}
+
+// Windows / Microsoft 登入互動事件
+const windowsPrimaryAccountBtn = document.querySelector('#windowsPrimaryAccountBtn');
+const windowsQuickLoginBtn = document.querySelector('#windowsQuickLoginBtn');
+const windowsUseOtherBtn = document.querySelector('#windowsUseOtherBtn');
+const windowsCancelOtherBtn = document.querySelector('#windowsCancelOtherBtn');
+const windowsOtherForm = document.querySelector('#windowsOtherForm');
+const windowsCustomEmail = document.querySelector('#windowsCustomEmail');
+const windowsCustomName = document.querySelector('#windowsCustomName');
+
+function loginWithWindows(customName, customEmail) {
+  setUser({
+    name: customName || '吳奕璿 (Windows Hello)',
+    email: customEmail || 'yixuan.wu@outlook.com',
+    picture: '/static/windows_avatar.svg',
+    provider: 'windows',
+    loginTime: Date.now()
+  });
+  closeLoginModalFunc();
+}
+
+if (windowsPrimaryAccountBtn) {
+  windowsPrimaryAccountBtn.addEventListener('click', () => loginWithWindows());
+}
+if (windowsQuickLoginBtn) {
+  windowsQuickLoginBtn.addEventListener('click', () => loginWithWindows());
+}
+
+if (windowsUseOtherBtn) {
+  windowsUseOtherBtn.addEventListener('click', () => {
+    const windowsAccountsBox = document.querySelector('.windows-accounts-box');
+    if (windowsAccountsBox) windowsAccountsBox.style.display = 'none';
+    if (windowsOtherForm) {
+      windowsOtherForm.style.display = 'flex';
+      if (windowsCustomEmail) windowsCustomEmail.focus();
+    }
+  });
+}
+
+if (windowsCancelOtherBtn) {
+  windowsCancelOtherBtn.addEventListener('click', () => {
+    if (windowsOtherForm) windowsOtherForm.style.display = 'none';
+    const windowsAccountsBox = document.querySelector('.windows-accounts-box');
+    if (windowsAccountsBox) windowsAccountsBox.style.display = 'flex';
+  });
+}
+
+if (windowsOtherForm) {
+  windowsOtherForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = windowsCustomEmail ? windowsCustomEmail.value.trim() : '';
+    if (!email) return;
+    const name = (windowsCustomName && windowsCustomName.value.trim()) || email.split('@')[0];
+    loginWithWindows(name, email);
   });
 }
 
