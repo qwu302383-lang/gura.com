@@ -4426,17 +4426,19 @@ class QuestionCalendarController {
 }
 
 // 實例化控制器
-let questionCalendarController = null;
+var questionCalendarController = null;
 function initQuestionCalendar() {
-  if (!questionCalendarController) {
-    questionCalendarController = new QuestionCalendarController();
+  if (typeof window !== 'undefined' && !window.questionCalendarController) {
+    window.questionCalendarController = new QuestionCalendarController();
+    questionCalendarController = window.questionCalendarController;
   }
-  return questionCalendarController;
+  return window.questionCalendarController || questionCalendarController;
 }
 
 function updateCalendarBadge() {
-  if (questionCalendarController) {
-    questionCalendarController.updateSidebarBadge();
+  const ctrl = (typeof window !== 'undefined' && window.questionCalendarController) || (typeof questionCalendarController !== 'undefined' ? questionCalendarController : null);
+  if (ctrl && typeof ctrl.updateSidebarBadge === 'function') {
+    ctrl.updateSidebarBadge();
   }
 }
 
