@@ -608,10 +608,13 @@ function appendMessageToCurrentSession(role, text) {
     if (sessionLabel) sessionLabel.textContent = 'CONVERSATION';
   }
 
-  session.messages.push({ role, text });
+  session.messages.push({ role, text, timestamp: Date.now() });
   session.updatedAt = Date.now();
   saveSessions(sessions);
   renderHistoryList();
+  if (typeof updateCalendarBadge === 'function') {
+    updateCalendarBadge();
+  }
 }
 
 function updateSessionMessage(oldPrompt, newPrompt, newResponse) {
@@ -673,6 +676,10 @@ function renderHistoryList(customQuery) {
 
   if (historySearchClearBtn) {
     historySearchClearBtn.style.display = rawQuery ? 'block' : 'none';
+  }
+
+  if (typeof updateCalendarBadge === 'function') {
+    updateCalendarBadge();
   }
 
   if (sessions.length === 0) {
@@ -3894,6 +3901,551 @@ setInterval(async () => {
     }
   }
 }, 30000);
+
+// ==========================================
+// 10. 提問日曆控制器 (QuestionCalendarController)
+// ==========================================
+class QuestionCalendarController {
+  constructor() {
+    this.modal = document.querySelector('#questionCalendarModal');
+    this.closeBtn = document.querySelector('#closeQuestionCalendarModal');
+    this.triggerBtn = document.querySelector('#questionCalendarBtn');
+    this.quickHeaderBtn = document.querySelector('#quickCalendarHeaderBtn');
+
+    this.prevMonthBtn = document.querySelector('#calendarPrevMonthBtn');
+    this.nextMonthBtn = document.querySelector('#calendarNextMonthBtn');
+    this.todayBtn = document.querySelector('#calendarTodayBtn');
+    this.monthYearText = document.querySelector('#calendarMonthYearText');
+    this.daysGrid = document.querySelector('#calendarDaysGrid');
+
+    this.statsTotalQuestions = document.querySelector('#calendarStatsTotalQuestions');
+    this.statsActiveDays = document.querySelector('#calendarStatsActiveDays');
+
+    this.selectedDateTitle = document.querySelector('#calendarSelectedDateTitle');
+    this.dateQuestionCountBadge = document.querySelector('#calendarDateQuestionCountBadge');
+    this.filterInput = document.querySelector('#calendarQuestionsFilterInput');
+    this.questionsList = document.querySelector('#calendarQuestionsList');
+
+    this.sidebarBadge = document.querySelector('#sidebarCalendarCountBadge');
+
+    const now = new Date();
+    this.viewYear = now.getFullYear();
+    this.viewMonth = now.getMonth(); // 0-11
+    this.selectedDateKey = this.formatDateKey(now);
+    this.filterKeyword = '';
+
+    this.initEvents();
+    this.updateSidebarBadge();
+  }
+
+  formatDateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  formatDisplayDate(dateKey) {
+    const parts = dateKey.split('-');
+    if (parts.length !== 3) return dateKey;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    const date = new Date(y, m - 1, d);
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    const w = weekdays[date.getDay()];
+    return `${y} 年 ${m} 月 ${d} 日 (星期${w})`;
+  }
+
+  // 匯總所有 Sessions 的 User 提問，並依日期（YYYY-MM-DD）分組
+  getQuestionsGroupedByDate() {
+    const sessions = typeof getSessions === 'function' ? getSessions() : [];
+    const dateMap = {};
+
+    sessions.forEach((session) => {
+      if (!session || !Array.isArray(session.messages)) return;
+
+      session.messages.forEach((msg, idx) => {
+        if (msg.role === 'user' && msg.text && msg.text.trim()) {
+          // 計算 timestamp：若無明確 timestamp 則依 session 建立/更新時間與索引依序遞增
+          let ts = msg.timestamp;
+          if (!ts || typeof ts !== 'number') {
+            const base = session.createdAt || session.updatedAt || Date.now();
+            ts = base + idx * 1000;
+          }
+
+          const d = new Date(ts);
+          const key = this.formatDateKey(d);
+
+          // 尋找相鄰的 assistant 回覆作為摘要預覽
+          let responseText = '';
+          for (let j = idx + 1; j < session.messages.length; j++) {
+            if (session.messages[j].role === 'assistant') {
+              responseText = session.messages[j].text || '';
+              break;
+            }
+            if (session.messages[j].role === 'user') {
+              break;
+            }
+          }
+
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          const timeStr = `${hours}:${minutes}`;
+
+          if (!dateMap[key]) {
+            dateMap[key] = [];
+          }
+
+          dateMap[key].push({
+            id: `${session.id}_msg_${idx}`,
+            sessionId: session.id,
+            sessionTitle: session.title || '未命名對話',
+            timestamp: ts,
+            timeStr: timeStr,
+            text: msg.text,
+            responseText: responseText
+          });
+        }
+      });
+    });
+
+    // 依提問時間由新至舊排序
+    Object.keys(dateMap).forEach((k) => {
+      dateMap[k].sort((a, b) => b.timestamp - a.timestamp);
+    });
+
+    return dateMap;
+  }
+
+  updateSidebarBadge() {
+    if (!this.sidebarBadge) return;
+    const dateMap = this.getQuestionsGroupedByDate();
+    let totalQuestions = 0;
+    Object.values(dateMap).forEach((arr) => {
+      totalQuestions += arr.length;
+    });
+
+    if (totalQuestions > 0) {
+      this.sidebarBadge.textContent = totalQuestions > 99 ? '99+' : String(totalQuestions);
+      this.sidebarBadge.style.display = 'inline-flex';
+      this.sidebarBadge.title = `累計向 Gura 詢問過 ${totalQuestions} 個問題`;
+    } else {
+      this.sidebarBadge.style.display = 'none';
+    }
+  }
+
+  openModal(targetDateKey = null) {
+    if (this.modal) {
+      this.modal.style.display = 'flex';
+    }
+
+    if (targetDateKey) {
+      this.selectedDateKey = targetDateKey;
+      const parts = targetDateKey.split('-');
+      if (parts.length === 3) {
+        this.viewYear = parseInt(parts[0], 10);
+        this.viewMonth = parseInt(parts[1], 10) - 1;
+      }
+    } else {
+      // 預設為選中今天
+      const now = new Date();
+      this.selectedDateKey = this.formatDateKey(now);
+      this.viewYear = now.getFullYear();
+      this.viewMonth = now.getMonth();
+    }
+
+    if (this.filterInput) {
+      this.filterInput.value = '';
+      this.filterKeyword = '';
+    }
+
+    this.renderCalendarGrid();
+    this.renderQuestionsList();
+  }
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.style.display = 'none';
+    }
+  }
+
+  prevMonth() {
+    this.viewMonth--;
+    if (this.viewMonth < 0) {
+      this.viewMonth = 11;
+      this.viewYear--;
+    }
+    this.renderCalendarGrid();
+  }
+
+  nextMonth() {
+    this.viewMonth++;
+    if (this.viewMonth > 11) {
+      this.viewMonth = 0;
+      this.viewYear++;
+    }
+    this.renderCalendarGrid();
+  }
+
+  goToToday() {
+    const now = new Date();
+    this.viewYear = now.getFullYear();
+    this.viewMonth = now.getMonth();
+    this.selectedDateKey = this.formatDateKey(now);
+    this.renderCalendarGrid();
+    this.renderQuestionsList();
+  }
+
+  selectDate(dateKey) {
+    this.selectedDateKey = dateKey;
+    const parts = dateKey.split('-');
+    if (parts.length === 3) {
+      const clickedYear = parseInt(parts[0], 10);
+      const clickedMonth = parseInt(parts[1], 10) - 1;
+      if (clickedYear !== this.viewYear || clickedMonth !== this.viewMonth) {
+        this.viewYear = clickedYear;
+        this.viewMonth = clickedMonth;
+      }
+    }
+    this.renderCalendarGrid();
+    this.renderQuestionsList();
+  }
+
+  renderCalendarGrid() {
+    if (!this.daysGrid || !this.monthYearText) return;
+
+    this.monthYearText.textContent = `${this.viewYear} 年 ${this.viewMonth + 1} 月`;
+
+    const dateMap = this.getQuestionsGroupedByDate();
+    const todayKey = this.formatDateKey(new Date());
+
+    // 計算當月天數與第一天星期幾
+    const firstDayIndex = new Date(this.viewYear, this.viewMonth, 1).getDay(); // 0 = Sun
+    const daysInCurrentMonth = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(this.viewYear, this.viewMonth, 0).getDate();
+
+    let monthTotalQuestions = 0;
+    let monthActiveDays = 0;
+
+    this.daysGrid.innerHTML = '';
+
+    // 上個月溢出天數
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = daysInPrevMonth - i;
+      const prevDate = new Date(this.viewYear, this.viewMonth - 1, dayNum);
+      const key = this.formatDateKey(prevDate);
+      const cell = this.createDayCell(dayNum, key, true, dateMap, todayKey);
+      this.daysGrid.appendChild(cell);
+    }
+
+    // 本月天數
+    for (let dayNum = 1; dayNum <= daysInCurrentMonth; dayNum++) {
+      const curDate = new Date(this.viewYear, this.viewMonth, dayNum);
+      const key = this.formatDateKey(curDate);
+      const questions = dateMap[key] || [];
+
+      if (questions.length > 0) {
+        monthTotalQuestions += questions.length;
+        monthActiveDays += 1;
+      }
+
+      const cell = this.createDayCell(dayNum, key, false, dateMap, todayKey);
+      this.daysGrid.appendChild(cell);
+    }
+
+    // 下個月溢出天數 (填滿總共 35 或 42 格)
+    const totalRendered = firstDayIndex + daysInCurrentMonth;
+    const targetCells = totalRendered > 35 ? 42 : 35;
+    const nextDaysCount = targetCells - totalRendered;
+
+    for (let dayNum = 1; dayNum <= nextDaysCount; dayNum++) {
+      const nextDate = new Date(this.viewYear, this.viewMonth + 1, dayNum);
+      const key = this.formatDateKey(nextDate);
+      const cell = this.createDayCell(dayNum, key, true, dateMap, todayKey);
+      this.daysGrid.appendChild(cell);
+    }
+
+    // 更新底部統計指標
+    if (this.statsTotalQuestions) {
+      this.statsTotalQuestions.textContent = `本月提問：${monthTotalQuestions} 則`;
+    }
+    if (this.statsActiveDays) {
+      this.statsActiveDays.textContent = `活躍天數：${monthActiveDays} 天`;
+    }
+  }
+
+  createDayCell(dayNum, key, isOtherMonth, dateMap, todayKey) {
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day-cell';
+    cell.dataset.date = key;
+
+    if (isOtherMonth) {
+      cell.classList.add('is-other-month');
+    }
+    if (key === todayKey) {
+      cell.classList.add('is-today');
+    }
+    if (key === this.selectedDateKey) {
+      cell.classList.add('is-selected');
+    }
+
+    const questions = dateMap[key] || [];
+    let indicatorHtml = '';
+    if (questions.length > 0) {
+      cell.classList.add('has-questions');
+      if (questions.length > 1) {
+        indicatorHtml = `<span class="calendar-q-count">${questions.length}</span>`;
+      } else {
+        indicatorHtml = `<span class="calendar-q-dot"></span>`;
+      }
+      cell.title = `${key}：詢問過 ${questions.length} 個問題 (點擊檢視)`;
+    } else {
+      cell.title = key;
+    }
+
+    cell.innerHTML = `
+      <span class="day-number">${dayNum}</span>
+      ${indicatorHtml}
+    `;
+
+    cell.addEventListener('click', () => {
+      this.selectDate(key);
+    });
+
+    return cell;
+  }
+
+  renderQuestionsList() {
+    if (!this.questionsList || !this.selectedDateTitle) return;
+
+    this.selectedDateTitle.textContent = this.formatDisplayDate(this.selectedDateKey);
+
+    const dateMap = this.getQuestionsGroupedByDate();
+    const rawQuestions = dateMap[this.selectedDateKey] || [];
+
+    let filtered = rawQuestions;
+    if (this.filterKeyword) {
+      const kw = this.filterKeyword.toLowerCase();
+      filtered = rawQuestions.filter((q) => {
+        return (
+          (q.text && q.text.toLowerCase().includes(kw)) ||
+          (q.sessionTitle && q.sessionTitle.toLowerCase().includes(kw)) ||
+          (q.responseText && q.responseText.toLowerCase().includes(kw))
+        );
+      });
+    }
+
+    if (this.dateQuestionCountBadge) {
+      this.dateQuestionCountBadge.textContent = `${filtered.length} 則提問`;
+    }
+
+    this.questionsList.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'calendar-empty-state';
+
+      if (rawQuestions.length === 0) {
+        emptyDiv.innerHTML = `
+          <div class="calendar-empty-icon">🏖️</div>
+          <strong class="calendar-empty-title">這一天尚未有提問紀錄</strong>
+          <p class="calendar-empty-desc">您可以點選日曆上有標記小圓點的日期回顧問題，或在主視窗中向 Gura 發送訊息開始提問！</p>
+          <button type="button" class="calendar-empty-newchat-btn" id="calendarEmptyNewChatBtn">＋ 開啟新對話並提問</button>
+        `;
+        const newChatBtn = emptyDiv.querySelector('#calendarEmptyNewChatBtn');
+        if (newChatBtn) {
+          newChatBtn.addEventListener('click', () => {
+            this.closeModal();
+            if (typeof startNewSession === 'function') {
+              startNewSession();
+            }
+          });
+        }
+      } else {
+        emptyDiv.innerHTML = `
+          <div class="calendar-empty-icon">🔍</div>
+          <strong class="calendar-empty-title">查無符合關鍵字的問題</strong>
+          <p class="calendar-empty-desc">在 ${this.selectedDateKey} 的 ${rawQuestions.length} 則提問中，未找到包含「${escapeHtml(this.filterKeyword)}」的紀錄。</p>
+        `;
+      }
+      this.questionsList.appendChild(emptyDiv);
+      return;
+    }
+
+    filtered.forEach((q) => {
+      const card = document.createElement('div');
+      card.className = 'calendar-question-card';
+      card.dataset.sessionId = q.sessionId;
+
+      const responsePreviewHtml = q.responseText
+        ? `
+        <div class="cqc-response-preview">
+          <div class="cqc-bot-badge">Gura</div>
+          <div class="cqc-response-text">${escapeHtml(q.responseText)}</div>
+        </div>
+      `
+        : '';
+
+      card.innerHTML = `
+        <div class="cqc-header">
+          <div class="cqc-meta-wrap">
+            <span class="cqc-time">⏰ ${q.timeStr}</span>
+            <span class="cqc-session-tag" title="${escapeHtml(q.sessionTitle)}">💬 ${escapeHtml(q.sessionTitle)}</span>
+          </div>
+          <button type="button" class="cqc-jump-btn" title="切換並前往此對話">
+            <span>開啟對話 ↗</span>
+          </button>
+        </div>
+        <div class="cqc-prompt-body">
+          <div class="cqc-user-badge">Q</div>
+          <div class="cqc-prompt-text">${escapeHtml(q.text)}</div>
+        </div>
+        ${responsePreviewHtml}
+        <div class="cqc-footer-actions">
+          <button type="button" class="cqc-action-link cqc-copy-btn">📋 複製問題</button>
+          <button type="button" class="cqc-action-link cqc-reuse-btn">✍️ 帶入輸入框</button>
+        </div>
+      `;
+
+      // 跳轉對話按鈕
+      const jumpBtn = card.querySelector('.cqc-jump-btn');
+      if (jumpBtn) {
+        jumpBtn.addEventListener('click', () => {
+          this.closeModal();
+          if (typeof loadSession === 'function') {
+            loadSession(q.sessionId);
+          } else if (typeof switchSession === 'function') {
+            switchSession(q.sessionId);
+          }
+          if (typeof closeMobileSidebar === 'function') {
+            closeMobileSidebar();
+          }
+        });
+      }
+
+      // 複製問題按鈕
+      const copyBtn = card.querySelector('.cqc-copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(q.text);
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '✅ 已複製！';
+            setTimeout(() => {
+              copyBtn.textContent = originalText;
+            }, 1800);
+          } catch (err) {
+            console.error('複製問題失敗', err);
+          }
+        });
+      }
+
+      // 帶入輸入框按鈕
+      const reuseBtn = card.querySelector('.cqc-reuse-btn');
+      if (reuseBtn) {
+        reuseBtn.addEventListener('click', () => {
+          this.closeModal();
+          const mainInput = document.querySelector('#input');
+          if (mainInput) {
+            mainInput.value = q.text;
+            mainInput.focus();
+            if (typeof autoResizeTextarea === 'function') {
+              autoResizeTextarea();
+            }
+          }
+          if (typeof closeMobileSidebar === 'function') {
+            closeMobileSidebar();
+          }
+        });
+      }
+
+      this.questionsList.appendChild(card);
+    });
+  }
+
+  initEvents() {
+    if (this.triggerBtn) {
+      this.triggerBtn.addEventListener('click', () => {
+        this.openModal();
+      });
+    }
+
+    if (this.quickHeaderBtn) {
+      this.quickHeaderBtn.addEventListener('click', () => {
+        this.openModal();
+      });
+    }
+
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => {
+        this.closeModal();
+      });
+    }
+
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) {
+          this.closeModal();
+        }
+      });
+    }
+
+    if (this.prevMonthBtn) {
+      this.prevMonthBtn.addEventListener('click', () => {
+        this.prevMonth();
+      });
+    }
+
+    if (this.nextMonthBtn) {
+      this.nextMonthBtn.addEventListener('click', () => {
+        this.nextMonth();
+      });
+    }
+
+    if (this.todayBtn) {
+      this.todayBtn.addEventListener('click', () => {
+        this.goToToday();
+      });
+    }
+
+    if (this.filterInput) {
+      this.filterInput.addEventListener('input', (e) => {
+        this.filterKeyword = e.target.value.trim();
+        this.renderQuestionsList();
+      });
+    }
+
+    // Esc 鍵關閉
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal && this.modal.style.display === 'flex') {
+        this.closeModal();
+      }
+    });
+  }
+}
+
+// 實例化控制器
+let questionCalendarController = null;
+function initQuestionCalendar() {
+  if (!questionCalendarController) {
+    questionCalendarController = new QuestionCalendarController();
+  }
+  return questionCalendarController;
+}
+
+function updateCalendarBadge() {
+  if (questionCalendarController) {
+    questionCalendarController.updateSidebarBadge();
+  }
+}
+
+// 頁面載入完成後初始化提問日曆
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initQuestionCalendar);
+} else {
+  initQuestionCalendar();
+}
 
 
 
