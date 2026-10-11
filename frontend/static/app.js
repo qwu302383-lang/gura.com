@@ -1270,7 +1270,7 @@ function addMessage(role, text) {
   if (role === 'user') {
     roleLabel = 'YOU <span class="tag-source client" title="由前端瀏覽器本地送出">💻 前端客戶端</span>';
   } else if (role === 'assistant') {
-    roleLabel = 'GEMINI 3.6 FLASH <span class="tag-source server" title="由 Python 後端伺服器調用 Google Gemini API 生成">⚡ 後端 AI 運算</span>';
+    roleLabel = 'GURA 3.6 FLASH <span class="tag-source server" title="由 Python 後端伺服器調用 Gura AI API 生成">⚡ 後端 AI 運算</span>';
   }
 
   message.innerHTML = `
@@ -1802,7 +1802,7 @@ if (todoMinimizeBtn && todoCard && todoToggleBtn) {
 renderTodoList();
 
 // ==========================================
-// 8. Gemini 風格側邊欄互動 (折疊、筆記本、搜尋聚焦)
+// 8. Gura 風格側邊欄互動 (折疊、筆記本、搜尋聚焦)
 // ==========================================
 const mainSidebar = document.querySelector('#mainSidebar');
 const sidebarCollapseBtn = document.querySelector('#sidebarCollapseBtn');
@@ -2324,8 +2324,8 @@ class CollabController {
       authorHtml = `
         <div class="message-collab-author">
           <div class="collab-author-avatar" style="background-color: #7c3aed;">AI</div>
-          <span class="collab-author-name">Gemini 3.6 Flash</span>
-          <span class="collab-role-tag ai" title="由 Python 後端伺服器調用 Google Gemini API">⚡ 後端 AI 運算</span>
+          <span class="collab-author-name">Gura 3.6 Flash</span>
+          <span class="collab-role-tag ai" title="由 Python 後端伺服器調用 Gura AI API">⚡ 後端 AI 運算</span>
         </div>
       `;
     } else {
@@ -3822,7 +3822,10 @@ async function loadBackendSystemStatus() {
     const data = await res.json();
 
     if (archBackendRuntime) archBackendRuntime.textContent = data.backend.runtime + ' · Flask';
-    if (archBackendModel) archBackendModel.textContent = data.backend.ai_model || 'Gemini 3.6 Flash';
+    if (archBackendModel) {
+      const modelName = data.backend.ai_model || 'Gura 3.6 Flash';
+      archBackendModel.textContent = modelName.replace(/gemini/ig, 'Gura');
+    }
     if (archUptimeValue) archUptimeValue.textContent = data.backend.uptime_text || '剛剛啟動';
     if (archTunnelStatus) {
       const pubUrl = data.tunnel.public_url;

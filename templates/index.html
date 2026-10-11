@@ -47,7 +47,7 @@
           <button id="backendStatusBtn" class="login-btn backend-status-btn" type="button" title="點擊檢視前後端系統架構與後端即時運行狀態">
             <span class="backend-status-indicator"></span>
             <span class="backend-status-text">後端在線</span>
-            <span class="backend-model-badge">Gemini 3.6</span>
+            <span class="backend-model-badge">Gura 3.6</span>
           </button>
           <button id="collabButton" class="login-btn collab-topbar-btn" type="button" title="進入/建立連機討論室，邀請不同使用者共用專案">
             <span class="collab-status-dot" id="collabStatusDot"></span>
@@ -255,7 +255,7 @@
 
 
 
-        <section class="chat-panel" aria-label="Gemini 對話區">
+        <section class="chat-panel" aria-label="Gura 對話區">
 
           <div class="panel-heading">
 
@@ -330,7 +330,7 @@
           <form id="chatForm" class="composer">
             <!-- 拓展工具列：即時聯網搜尋開關 + 手機聯動中心 + 自動語音朗讀開關 -->
             <div class="composer-toolbar">
-              <button type="button" id="webSearchToggleBtn" class="toolbar-pill-btn" title="開啟/關閉即時聯網搜尋（讓 Gemini 檢索最新資訊）">
+              <button type="button" id="webSearchToggleBtn" class="toolbar-pill-btn" title="開啟/關閉即時聯網搜尋（讓 Gura 檢索最新資訊）">
                 <svg class="toolbar-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -384,7 +384,7 @@
 
 
 
-      <footer class="footer"><span>POWERED BY GEMINI API</span><span>LOCAL / PRIVATE BY DEFAULT</span></footer>
+      <footer class="footer"><span>POWERED BY GURA AI</span><span>LOCAL / PRIVATE BY DEFAULT</span></footer>
     </div>
 
     <!-- 帳號登入 / 選擇帳戶 Modal (支援 Google / Apple / Windows) -->
@@ -761,7 +761,7 @@
           </div>
           <button id="closeCollabModal" class="modal-close-btn" type="button" aria-label="關閉視窗">✕</button>
         </div>
-        <p class="google-modal-subtitle">邀請不同使用者或組員連機加入，共同向 Gemini 提問與編輯專案資料</p>
+        <p class="google-modal-subtitle">邀請不同使用者或組員連機加入，共同向 Gura 提問與編輯專案資料</p>
 
         <!-- 未進入房間時：顯示 [建立新專案] 與 [加入現有專案] 分頁 -->
         <div id="collabEntryView">
@@ -947,7 +947,7 @@
               </div>
               <div class="arch-info-item">
                 <span class="arch-info-label">AI 旗艦模型</span>
-                <span class="arch-info-value highlight" id="archBackendModel">Google Gemini 3.6 Flash</span>
+                <span class="arch-info-value highlight" id="archBackendModel">Gura 3.6 Flash</span>
               </div>
               <div class="arch-info-item">
                 <span class="arch-info-label">伺服器埠號</span>
@@ -969,8 +969,8 @@
             <div class="arch-duty-box">
               <strong>後端職責範圍：</strong>
               <ul>
-                <li>安全存儲 Gemini API 金鑰，杜絕外洩給前端</li>
-                <li>調度 Gemini 3.6 Flash 旗艦模型推理與即時聯網檢索</li>
+                <li>安全存儲 Gura AI API 金鑰，杜絕外洩給前端</li>
+                <li>調度 Gura 3.6 Flash 旗艦模型推理與即時聯網檢索</li>
                 <li>管理多人專案房間多執行緒鎖定與磁碟 JSON 持久化</li>
               </ul>
             </div>
@@ -1295,6 +1295,6 @@
       <button type="button" id="cancelWebTimerBtn" class="timer-banner-cancel-btn" title="關閉計時/停止響鈴">停止</button>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=17"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=18"></script>
   </body>
 </html>

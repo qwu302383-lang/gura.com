@@ -253,8 +253,8 @@ def collab_message():
                     ai_id = len(room["messages"]) + 1
                     ai_msg = {
                         "id": ai_id,
-                        "user_id": "gemini_ai",
-                        "user_name": "Gemini 3.6 Flash",
+                        "user_id": "gura_ai",
+                        "user_name": "Gura 3.6 Flash",
                         "role": "assistant",
                         "text": ai_text,
                         "timestamp": now,
@@ -274,7 +274,7 @@ def collab_message():
                         "user_id": "system",
                         "user_name": "系統提示",
                         "role": "system",
-                        "text": f"⚠️ Gemini AI 回覆失敗：{str(e)}",
+                        "text": f"⚠️ Gura AI 回覆失敗：{str(e)}",
                         "timestamp": time.time(),
                         "is_ai": False
                     })

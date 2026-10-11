@@ -37,7 +37,7 @@ def system_status():
             "runtime": f"Python {platform.python_version()}",
             "os": f"{platform.system()} {platform.release()}",
             "framework": "Flask RESTful API",
-            "ai_model": DEFAULT_MODEL,
+            "ai_model": (DEFAULT_MODEL.replace("gemini", "gura") if "gemini" in DEFAULT_MODEL.lower() else DEFAULT_MODEL),
             "port": 5000,
             "uptime_seconds": uptime_sec,
             "uptime_text": uptime_str,

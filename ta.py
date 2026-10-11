@@ -274,8 +274,8 @@ def generate_chat_reply(prompt, web_search=False):
                             }
                 elif response.status_code in (401, 403):
                     raise GeminiAuthenticationError(
-                        "Gemini API 金鑰無效或未授權（HTTP "
-                        f"{response.status_code}）。請撤銷外洩的舊金鑰，建立新金鑰並更新 GEMINI_API_KEY。"
+                        "Gura API 金鑰無效或未授權（HTTP "
+                        f"{response.status_code}）。請撤銷外洩的舊金鑰，建立新金鑰並更新金鑰設定。"
                     )
                 elif response.status_code == 404:
                     last_error = f"模型 {model} 不存在或目前不可用 (HTTP 404)，切換備用模型中..."
@@ -285,7 +285,7 @@ def generate_chat_reply(prompt, web_search=False):
                     break
                 else:
                     detail = response.text[:300].replace("\n", " ")
-                    raise RuntimeError(f"Gemini API 回傳 HTTP {response.status_code}: {detail}")
+                    raise RuntimeError(f"Gura API 回傳 HTTP {response.status_code}: {detail}")
             except requests.exceptions.Timeout:
                 last_error = f"模型 {model} 連線逾時，切換備用模型中..."
                 break
@@ -297,7 +297,7 @@ def generate_chat_reply(prompt, web_search=False):
                 break
 
     clean_err = _mask_key(str(last_error or "未知錯誤"), api_key)
-    raise RuntimeError(f"Gemini 請求失敗：{clean_err}")
+    raise RuntimeError(f"Gura 請求失敗：{clean_err}")
 
 
 def generate_response(prompt, web_search=False):

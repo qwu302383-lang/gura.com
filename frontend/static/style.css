@@ -68,7 +68,7 @@ button { cursor: pointer; }
 .logout-link:hover { color: var(--accent); }
 .workspace { flex: 1; display: flex; min-height: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
 
-/* Gemini 風格側邊欄 (依視窗寬度比例流動調整) */
+/* Gura 風格側邊欄 (依視窗寬度比例流動調整) */
 .sidebar {
   width: clamp(210px, 19vw, 320px);
   min-width: 200px;
