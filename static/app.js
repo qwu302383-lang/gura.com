@@ -862,6 +862,273 @@ if (newChatButton) newChatButton.addEventListener('click', startNewSession);
 if (clearButton) clearButton.addEventListener('click', startNewSession);
 if (clearHistoryButton) clearHistoryButton.addEventListener('click', clearAllHistory);
 
+const ENGINEERING_DOC_SESSION_ID = 'sess_engineering_records_v1';
+const ENGINEERING_DOC_CONTENT = `================================================================================
+                    【 Gura AI 前端完整工程紀錄表 】
+                     (Frontend Engineering Specification)
+================================================================================
+
+一、前端系統架構拓撲圖 (Architecture Topology)
+--------------------------------------------------------------------------------
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Gura AI 前端架構拓撲圖                          │
+├────────────────────────────────────────────────────────────────────────┤
+│  【展示與互動層 UI Presentation Layer】                                │
+│  ┌────────────────────────┐  ┌───────────────────────────────────────┐ │
+│  │ 頂部導航列 Topbar      │  │ Gura 流體側邊欄 Sidebar (響應式抽屜)  │ │
+│  │ · 系統在線 (Gura 3.6)  │  │ · 新對話 / 歷史對話即時檢索           │ │
+│  │ · 多平台登入 (G//⊞)   │  │ · 連機協作 / 提問日曆 / 筆記本        │ │
+│  └────────────────────────┘  └───────────────────────────────────────┘ │
+│  ┌───────────────────────────────────┐  ┌────────────────────────────┐ │
+│  │ 主聊天工作區 Chat Workspace       │  │ 輸入工作區 Composer        │ │
+│  │ · 對話訊息流 (YOU / GURA 3.6)     │  │ · 多行文字輸入自適應高度   │ │
+│  │ · 語音朗讀 (TTS) / 提示詞編輯覆蓋 │  │ · 語音辨識輸入 (STT)       │ │
+│  │ · 複製回覆 / 執行源標記           │  │ · 聯網搜尋開關 / 手機聯動  │ │
+│  └───────────────────────────────────┘  └────────────────────────────┘ │
+├────────────────────────────────────────────────────────────────────────┤
+│  【核心業務控制器 Controllers Layer】                                  │
+│  ┌────────────────┐ ┌─────────────────┐ ┌────────────────────────────┐ │
+│  │ 認證模組       │ │ 會話管理器      │ │ 提問日曆控制器             │ │
+│  │ AuthModule     │ │ SessionManager  │ │ QuestionCalendarController │ │
+│  └───────┬────────┘ └────────┬────────┘ └─────────────┬──────────────┘ │
+│  ┌───────┴────────┐ ┌───────┴────────┐ ┌─────────────┴──────────────┐ │
+│  │ 語音引擎       │ │ 多人協作控制器  │ │ 語音頻道與音樂 DJ 控制器   │ │
+│  │ VoiceEngine    │ │ CollabCtrl      │ │ CollabVoiceController      │ │
+│  └────────────────┘ └─────────────────┘ └────────────────────────────┘ │
+├────────────────────────────────────────────────────────────────────────┤
+│  【本地快取層 LocalStorage】         【後端通訊層 API Communication】  │
+│  · prompt_atelier_user (使用者身分)  · POST /api/chat (對話推理)       │
+│  · prompt_atelier_sessions (會話快照)· 1.5s 差量輪詢 /api/collab/*     │
+│  · gura_auto_speak / web_search 設定 · 30s 心跳測速 /api/system/ping   │
+└────────────────────────────────────────────────────────────────────────┘
+
+二、前端核心模組職責說明 (Module Specifications)
+--------------------------------------------------------------------------------
+1. 多平台認證模組 (AuthModule)：
+   - 檔案位置：frontend/static/app.js (L115-L555)
+   - 核心能力：支援 Google Identity、Apple ID、Windows Hello / Microsoft 三大登入管道。
+   - 狀態持久化：使用者資訊快取於 localStorage[prompt_atelier_user]。
+   - 風格適配：頂部與側邊欄動態顯示專屬 Badge（Google 藍 G、Apple 黑 、Windows 藍 ⊞）與專屬 SVG 頭像。
+
+2. 會話與歷史對話管理器 (SessionManager)：
+   - 檔案位置：frontend/static/app.js (L560-L860)
+   - 核心能力：維護 localStorage[prompt_atelier_sessions] 陣列。
+   - 檢索增強：支援即時不分大小寫關鍵字過濾，透過 extractSnippet 與 <mark> 高亮匹配文字。
+   - 編輯覆蓋：支援「編輯提示詞並重新生成」功能。
+
+3. 提問日曆與回顧系統 (QuestionCalendarController)：
+   - 檔案位置：frontend/static/app.js (L3910-L4440)
+   - 核心能力：動態運算 42 格月曆網格，自動標記當日提問小圓點與數量徽章。
+   - 歷史聚合：遍歷所有會話的使用者問題，依時間倒序分組。
+   - 互動操作：點擊日期即時顯示該日所有問題卡片，支援「開啟對話 ↗」（直接跳轉進入該次對話）、「複製問題」、「帶入輸入框」。
+
+4. 語音處理管道 (VoiceEngine)：
+   - 檔案位置：frontend/static/app.js (L870-L1215)
+   - 語音輸入 (STT)：調用 webkitSpeechRecognition 進行國語/繁體中文即時聽寫。
+   - 語音合成 (TTS)：調用 window.speechSynthesis 進行自然人聲朗讀，內建 Markdown 標籤淨化過濾。
+
+5. 多人專案即時協作 (CollabController)：
+   - 檔案位置：frontend/static/app.js (L1880-L2580)
+   - 核心能力：採用 1.5 秒無感知 REST 差量輪詢，維護房間在線成員、發言流與系統事件。
+
+6. 語音通話與音樂 DJ Lounge (CollabVoiceController)：
+   - 檔案位置：frontend/static/app.js (L2590-L3730)
+   - 核心能力：WebRTC 通話狀態介面、常駐懸浮通話球 (#voiceMiniDock)。
+   - Spotify 連動：嵌入 Spotify 官方 Embed 播放器、點播待播隊列 (Queue)、精選推薦庫、DJ 骰子與歡呼互動。
+
+7. 手機聯動中心與智能工具 (PhoneHubController)：
+   - 檔案位置：frontend/static/app.js (L1520-L1800)
+   - 核心能力：支援手機鬧鐘與倒數計時器設定，並提供頂部常駐倒數懸浮條 (#activeTimerBanner)。
+
+8. 系統架構監控面板 (ArchitectureController)：
+   - 檔案位置：frontend/static/app.js (L3740-L3900)
+   - 核心能力：每 30 秒自動向後端發送 /api/system/ping 測量延遲並更新運行指標。
+
+三、前端訊息生命週期時序圖 (Message Lifecycle Sequence)
+--------------------------------------------------------------------------------
+[使用者] ➔ 輸入提示詞 ➔ [Composer] 點擊送出
+  │
+  ├─ 1. appendMessageToCurrentSession('user', text, timestamp)
+  │      ├─ 寫入 localStorage[prompt_atelier_sessions]
+  │      ├─ 呼叫 renderHistoryList() 更新側邊欄
+  │      └─ 呼叫 updateCalendarBadge() 更新提問日曆徽章
+  │
+  ├─ 2. 渲染使用者訊息氣泡 (YOU / 💻 前端客戶端)
+  │
+  ├─ 3. 發送 HTTP POST 請求至後端 /api/chat { prompt, web_search }
+  │      └─ [Python 後端執行聯網搜尋與 Gura 3.6 模型推理]
+  │
+  ├─ 4. 接收後端 200 OK 響應 { response, search_sources, phone_action }
+  │
+  ├─ 5. appendMessageToCurrentSession('assistant', response, timestamp)
+  │
+  └─ 6. 渲染助理訊息氣泡 (GURA 3.6 FLASH / ⚡ 後端 AI 運算)
+         └─ (若開啟自動朗讀，自動觸發語音合成朗讀)
+
+四、前端響應式排版與快取策略
+--------------------------------------------------------------------------------
+- 桌面端 (Desktop ≥ 1024px)：側邊欄 clamp(210px, 19vw, 320px)；彈窗雙欄並排（日曆左、清單右）。
+- 行動端 (Mobile ≤ 768px)：側邊欄自動轉換為全螢幕滑入抽屜；通話縮為迷你懸浮膠囊球。
+- 版本快取防止：靜態資源標註版本號（app.js?v=18）。
+
+
+================================================================================
+                    【 Gura AI 後端完整工程紀錄表 】
+                     (Backend Engineering Specification)
+================================================================================
+
+一、後端系統架構拓撲圖 (Architecture Topology)
+--------------------------------------------------------------------------------
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Gura AI 後端架構拓撲圖                          │
+├────────────────────────────────────────────────────────────────────────┤
+│  【網路入口與安全隧道 Entry & Tunnel Layer】                           │
+│  ┌──────────────────────┐  ┌───────────────────┐  ┌──────────────────┐ │
+│  │ 本機連接埠 Port 5000 │  │ Cloudflare Tunnel │  │ 區網 Wi-Fi IP    │ │
+│  │ 0.0.0.0:5000         │  │ *.trycloudflare   │  │ 192.168.x.x:5000 │ │
+│  └──────────┬───────────┘  └─────────┬─────────┘  └────────┬─────────┘ │
+├─────────────┼────────────────────────┼─────────────────────┼───────────┤
+│  【Flask 核心應用引擎 Flask Core Engine】  (Application Factory 模式)   │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │ Flask-CORS 跨來源共用中介層                                       │ │
+│  └───────────────────────────────────┬───────────────────────────────┘ │
+│  ┌──────────────────┐ ┌──────────────┴───────┐ ┌─────────────────────┐ │
+│  │ 對話藍圖         │ │ 多人協作藍圖         │ │ 系統監控藍圖        │ │
+│  │ Chat Blueprint   │ │ Collab Blueprint     │ │ System Blueprint    │ │
+│  │ · /api/chat      │ │ · /api/collab/room/* │ │ · /api/system/ping  │ │
+│  │                  │ │ · 語音/Spotify 隊列  │ │ · /api/system/status│ │
+│  └────────┬─────────┘ └──────────────┬───────┘ └─────────────────────┘ │
+├───────────┼──────────────────────────┼─────────────────────────────────┤
+│  【後端服務與安全防護 Services Layer】                                 │
+│  ┌────────┴──────────┐ ┌─────────────┴───────┐ ┌─────────────────────┐ │
+│  │ AI 推理引擎服務   │ │ 多人協作併發服務    │ │ 聯網檢索增強服務    │ │
+│  │ ta.py / gemini    │ │ CollabService       │ │ WebSearchService    │ │
+│  │ · 5層容錯降級鏈   │ │ · threading.Lock    │ │ · DuckDuckGo/Bing   │ │
+│  │ · _mask_key 遮罩  │ │ · collab_rooms.json │ │ · 手機意圖 Regex    │ │
+│  └────────┬──────────┘ └─────────────────────┘ └─────────────────────┘ │
+├───────────┼────────────────────────────────────────────────────────────┤
+│  【外部上游通訊 Upstream APIs】                                        │
+│  · Google Generative AI API (gemini-3.6-flash / 3.5 / 2.5)             │
+│  · Cloudflare Edge Relay (TLS 1.3 端到端加密)                          │
+└────────────────────────────────────────────────────────────────────────┘
+
+二、後端核心模組職責說明 (Module Specifications)
+--------------------------------------------------------------------------------
+1. 應用工廠模組 (backend/__init__.py)：
+   - 採用 create_app() 工廠函式模式。
+   - 統籌組裝 Flask 應用實例、CORS 配置與 Blueprints 路由註冊。
+
+2. 全域配置中心 (backend/config.py)：
+   - 集中解析環境變數（GEMINI_API_KEY、GEMINI_MODEL、FALLBACK_MODELS）。
+   - 定義資料持久化目錄 (data/collab_rooms.json) 與伺服器啟動時間記號。
+
+3. 對話與推理藍圖 (backend/routes/chat_routes.py)：
+   - 路由：POST /api/chat
+   - 輸入：{ prompt, web_search }
+   - 職責：整合聯網檢索結果與提示詞增強，調用 Gura AI 推理，回傳對話內容。
+
+4. 多人協作藍圖 (backend/routes/collab_routes.py)：
+   - 路由：/api/collab/room/* (建立、加入、發送訊息、輪詢、音樂隊列)
+   - 併發控制：採用 threading.Lock (rooms_lock) 防止多執行緒寫入衝突。
+   - 資料儲存：記憶體快取 (rooms_cache) + 磁碟檔案持久化 (collab_rooms.json)。
+   - AI 伴聊：支援在多人專案房間內自動調度 Gura AI 產生回應。
+
+5. 系統狀態監控藍圖 (backend/routes/system_routes.py)：
+   - 路由：GET /api/system/ping（即時延遲量測，回傳 200 pong）
+   - 路由：GET /api/system/status（系統運行時間、作業系統、調度模型與穿透網址）
+
+6. AI 推理引擎與容錯服務 (ta.py / gemini_service.py)：
+   - 實作五層模型備用降級鏈。
+   - 實作 _mask_key(text, api_key) 金鑰過濾器，杜絕機密洩漏。
+
+7. 伺服器守護啟動腳本 (run_server.py)：
+   - 自動管理 Cloudflare Quick Tunnel 守護行程，取得 https://*.trycloudflare.com。
+   - 自動獲取區域網路 Wi-Fi IP，並在桌面生成「Gura AI 對話助手.url」捷徑。
+
+三、多層模型容錯降級鏈 (Fallback Chain)
+--------------------------------------------------------------------------------
+[發起 Gura AI 請求]
+  │
+  ▼
+[優先調度模型: Gura 3.6 Flash (gemini-3.6-flash)]
+  ├── 成功 (200 OK) ──► 解析內容並回傳前端
+  └── 失敗 (404/429/503/連線逾時)
+        │
+        ▼
+  [備用模型 1: gemini-3.5-flash]
+        ├── 成功 (200 OK) ──► 解析內容並回傳前端
+        └── 失敗
+              │
+              ▼
+  [備用模型 2: gemini-2.5-flash]
+        ├── 成功 (200 OK) ──► 解析內容並回傳前端
+        └── 失敗
+              │
+              ▼
+  [備用模型 3: gemini-2.5-flash-lite]
+        ├── 成功 (200 OK) ──► 解析內容並回傳前端
+        └── 失敗
+              │
+              ▼
+  [備用模型 4: gemini-flash-latest]
+        ├── 成功 (200 OK) ──► 解析內容並回傳前端
+        └── 全數失敗 ──► 觸發 _mask_key 遮罩保護並回報友善錯誤
+
+四、多人協作房間併發控制與資料流 (Concurrency & Persistence Flow)
+--------------------------------------------------------------------------------
+[客戶端 A 發言] ──► POST /api/collab/room/message
+                       │
+                       ▼
+                 [獲取 rooms_lock 互斥鎖]
+                       │
+                       ├─► 寫入記憶體快取 rooms_cache
+                       ├─► 同步寫入磁碟 data/collab_rooms.json
+                       │
+                 [釋放 rooms_lock 互斥鎖]
+                       │
+                       ▼
+[客戶端 B 每 1.5 秒] ──► GET /api/collab/room/{id}?since={last_id}
+                       │
+                       ▼
+                 讀取差量訊息列表 ──► 增量渲染對話畫面
+
+五、後端安全與通訊指標
+--------------------------------------------------------------------------------
+- 金鑰防護：GEMINI_API_KEY 僅於後端隔離存儲，前端不可見。所有異常錯誤字串均經由正則遮罩處理。
+- 隧道加密：Cloudflare Quick Tunnel (TLS 1.3)，零設定公網穿透。
+- 運作環境：Python 3.10+ / 3.14 + Flask RESTful API。
+`;
+
+function seedEngineeringRecordsIfNeed() {
+  const sessions = getSessions();
+  const exists = sessions.some((s) => s.id === ENGINEERING_DOC_SESSION_ID);
+  if (!exists) {
+    const engSession = {
+      id: ENGINEERING_DOC_SESSION_ID,
+      title: '專案工程紀錄表 (前後端完整架構)',
+      createdAt: Date.now() - 3600000,
+      updatedAt: Date.now(),
+      messages: [
+        {
+          role: 'user',
+          text: '幫我生成完整地工程紀錄表 前端後端各一個 附圖跟文字說明',
+          timestamp: Date.now() - 3600000
+        },
+        {
+          role: 'assistant',
+          text: ENGINEERING_DOC_CONTENT,
+          timestamp: Date.now() - 3590000
+        }
+      ]
+    };
+    sessions.unshift(engSession);
+    saveSessions(sessions);
+    if (typeof updateCalendarBadge === 'function') {
+      updateCalendarBadge();
+    }
+  }
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1478,10 +1745,14 @@ if (input) {
 }
 
 // 初始化
+seedEngineeringRecordsIfNeed();
 updateAuthUI();
 updateAutoSpeakUI();
 updateWebSearchUI();
 renderHistoryList();
+if (!currentSessionId) {
+  loadSession(ENGINEERING_DOC_SESSION_ID);
+}
 
 // 語音輸入按鈕監聽
 if (voiceInputBtn) {
