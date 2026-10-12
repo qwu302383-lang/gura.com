@@ -1,3 +1,10 @@
+// 全域控制器宣告 (使用 var 避免 Temporal Dead Zone 導致按鈕事件監聽中斷)
+var collabController = null;
+var voiceSynthesisController = null;
+var voiceInputController = null;
+var voiceController = null;
+var questionCalendarController = null;
+
 // DOM 元素選取
 const form = document.querySelector('#chatForm');
 const input = document.querySelector('#promptInput');
@@ -1441,8 +1448,10 @@ class VoiceInputController {
   }
 }
 
-const voiceSynthesisController = new VoiceSynthesisController();
-const voiceInputController = new VoiceInputController(input, voiceInputBtn, voiceInputStatus);
+voiceSynthesisController = new VoiceSynthesisController();
+window.voiceSynthesisController = voiceSynthesisController;
+voiceInputController = new VoiceInputController(input, voiceInputBtn, voiceInputStatus);
+window.voiceInputController = voiceInputController;
 
 function isAutoSpeakEnabled() {
   return localStorage.getItem(AUTO_SPEAK_KEY) === 'true';
@@ -1750,9 +1759,6 @@ updateAuthUI();
 updateAutoSpeakUI();
 updateWebSearchUI();
 renderHistoryList();
-if (!currentSessionId) {
-  loadSession(ENGINEERING_DOC_SESSION_ID);
-}
 
 // 語音輸入按鈕監聽
 if (voiceInputBtn) {
@@ -2835,7 +2841,8 @@ class CollabController {
 }
 
 // 實例化並啟動協作控制器
-const collabController = new CollabController();
+collabController = new CollabController();
+window.collabController = collabController;
 collabController.init();
 
 // ==========================================
@@ -4048,7 +4055,7 @@ class VoiceAndMusicController {
 }
 
 // 實例化並全域掛載語音通話與音樂 DJ 控制器
-const voiceController = new VoiceAndMusicController();
+voiceController = new VoiceAndMusicController();
 window.voiceController = voiceController;
 voiceController.init();
 
@@ -4716,11 +4723,18 @@ function updateCalendarBadge() {
   }
 }
 
-// 頁面載入完成後初始化提問日曆
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initQuestionCalendar);
-} else {
+// 頁面載入完成後統一初始化提問日曆與預設會話
+function initAppFull() {
   initQuestionCalendar();
+  if (!currentSessionId) {
+    loadSession(ENGINEERING_DOC_SESSION_ID);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAppFull);
+} else {
+  initAppFull();
 }
 
 
