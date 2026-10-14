@@ -12,12 +12,13 @@ def chat():
     data = request.get_json(silent=True) or {}
     prompt = str(data.get("prompt", "")).strip()
     web_search = bool(data.get("web_search", False))
+    web_builder = bool(data.get("web_builder", False))
 
     if not prompt:
         return jsonify({"error": "請先輸入 prompt。"}), 400
 
     try:
-        reply_data = generate_chat_reply(prompt, web_search=web_search)
+        reply_data = generate_chat_reply(prompt, web_search=web_search, web_builder=web_builder)
         return jsonify(reply_data)
     except GeminiAuthenticationError as error:
         return jsonify({"error": str(error)}), 401

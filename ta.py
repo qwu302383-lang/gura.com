@@ -213,8 +213,24 @@ def detect_phone_actions(prompt):
     return None
 
 
-def generate_chat_reply(prompt, web_search=False):
-    """呼叫 Gemini 產生對話，同時支援網路檢索增強與手機指令卡片生成"""
+def is_web_builder_request(prompt, web_builder=False):
+    if web_builder:
+        return True
+    if not prompt:
+        return False
+    p = prompt.lower()
+    keywords = [
+        "做一個網頁", "製作網頁", "生成網頁", "簡易網頁", "做網頁", "設計網頁",
+        "網頁製作", "寫一個網頁", "建立網頁", "建立一個網頁", "做個網頁",
+        "製作一個網頁", "寫個網頁", "設計一個網頁", "前端網頁",
+        "create a webpage", "build a website", "make a website", "create a website",
+        "html網頁", "html 網頁", "單頁網頁", "網頁版"
+    ]
+    return any(k in p for k in keywords)
+
+
+def generate_chat_reply(prompt, web_search=False, web_builder=False):
+    """呼叫 Gemini 產生對話，同時支援網路檢索增強、手機指令卡片與簡易網頁生成模式"""
     api_key = os.getenv("GEMINI_API_KEY", "").strip() or API_KEY
     if not api_key:
         raise GeminiAuthenticationError(
@@ -227,6 +243,39 @@ def generate_chat_reply(prompt, web_search=False):
     # 檢測或執行網路檢索
     search_sources = []
     augmented_instruction = "請使用繁體中文回答，專有名詞可保留英文。"
+
+    is_web_builder = is_web_builder_request(prompt, web_builder)
+    if is_web_builder:
+        web_builder_instruction = (
+            "\n\n【簡易網頁製作模式 (Web Page Builder Mode)】\n"
+            "你現在是世界頂尖的前端架構師與 UI/UX 設計專家。使用者的目標是依照其輸入的要求製作出完整、美觀、可操作且具備現代互動性的「簡易網頁」。\n"
+            "請嚴格遵守以下製作規範：\n"
+            "1. 【單一完整檔案架構】：必須輸出一個完整、獨立、可直接在瀏覽器運行的單一 HTML 檔案，包含 <!DOCTYPE html>、<html lang=\"zh-TW\">、<head>、<meta charset=\"UTF-8\">、<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">、<title>、<style>、<body> 與 <script>。\n"
+            "2. 【現代感視覺與 CSS 樣式】：\n"
+            "   - 所有樣式必須內嵌於 <style> 標籤中。\n"
+            "   - 採用現代化排版（Flexbox、CSS Grid、優雅圓角 border-radius、柔和多層陰影 box-shadow、高質感漸層背景、微動態懸浮效果 hover/transition、流暢動畫 @keyframes）。\n"
+            "   - 確保配色協調、字體層級清晰、具備現代 Web App 或精緻產品頁面視覺質感。\n"
+            "3. 【全裝置響應式設計 (RWD)】：\n"
+            "   - 必須支援流體響應式佈局，確保在手機 (375px~480px)、平板 (768px) 與桌機 (1024px+) 上完美自適應，文字不溢出、按鈕好點擊。\n"
+            "4. 【豐富且真實的原生 JS 互動 (Vanilla JS)】：\n"
+            "   - 所有互動邏輯必須內嵌在 <script> 標籤中，使用原生 JavaScript。\n"
+            "   - 務必依照使用者需求實現所有具體互動功能（如：按鈕點擊動態、清單新增/刪除/完成切換、篩選分類標籤切換、表單驗證與成功彈窗提示、計算器/計數器數值連動、深淺色主題切換等），不可留下空按鈕或未實現的 TODO。\n"
+            "5. 【外部資源安全保證】：\n"
+            "   - 圖示請使用內嵌 SVG 或 Unicode 符號（避免引用需連外下載且容易破圖的 icon font）。\n"
+            "   - 圖片請使用高品質 Unsplash 網址（如 https://images.unsplash.com/...）或現代 SVG 插圖，避免破圖。\n"
+            "6. 【輸出格式規範】：\n"
+            "   - 請務必將完整的 HTML 程式碼包裹在標準 Markdown 代碼區塊中：\n"
+            "     ```html\n"
+            "     <!DOCTYPE html>\n"
+            "     <html lang=\"zh-TW\">\n"
+            "     ...\n"
+            "     </html>\n"
+            "     ```\n"
+            "   - 在代碼區塊之前：以 2~3 句話簡要介紹此網頁的設計理念與核心功能。\n"
+            "   - 在代碼區塊之後：附上使用引導與快捷操作提示。\n"
+            "7. 【疊代修改適配】：如果使用者的要求是在先前製作的網頁上做修改或調整，請在保留原有所有結構與功能的基礎上進行改進，並輸出更新後的完整 HTML 檔案。\n"
+        )
+        augmented_instruction += web_builder_instruction
 
     if web_search:
         search_sources = search_web_snippets(prompt, max_results=4)
@@ -271,6 +320,7 @@ def generate_chat_reply(prompt, web_search=False):
                                 "response": parts[0]["text"],
                                 "search_sources": search_sources,
                                 "phone_action": phone_action,
+                                "is_web_builder": is_web_builder,
                             }
                 elif response.status_code in (401, 403):
                     raise GeminiAuthenticationError(

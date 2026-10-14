@@ -4,6 +4,7 @@ var voiceSynthesisController = null;
 var voiceInputController = null;
 var voiceController = null;
 var questionCalendarController = null;
+var webBuilderController = null;
 
 // DOM 元素選取
 const form = document.querySelector('#chatForm');
@@ -19,13 +20,18 @@ const historySearchClearBtn = document.querySelector('#historySearchClearBtn');
 const sessionLabel = document.querySelector('#sessionLabel');
 const sessionTitle = document.querySelector('#sessionTitle');
 
-// 語音與拓展工具列元素
+// 語音、網頁製作與拓展工具列元素
 const voiceInputBtn = document.querySelector('#voiceInputBtn');
 const voiceInputStatus = document.querySelector('#voiceInputStatus');
 const autoSpeakToggleBtn = document.querySelector('#autoSpeakToggleBtn');
 const autoSpeakBadge = document.querySelector('#autoSpeakBadge');
 const webSearchToggleBtn = document.querySelector('#webSearchToggleBtn');
 const webSearchBadge = document.querySelector('#webSearchBadge');
+const webBuilderToggleBtn = document.querySelector('#webBuilderToggleBtn');
+const webBuilderBadge = document.querySelector('#webBuilderBadge');
+const sidebarWebBuilderBtn = document.querySelector('#sidebarWebBuilderBtn');
+const webBuilderModal = document.querySelector('#webBuilderModal');
+const closeWebBuilderModal = document.querySelector('#closeWebBuilderModal');
 
 // 連機協作相關 DOM 元素
 const collabButton = document.querySelector('#collabButton');
@@ -1501,6 +1507,204 @@ function updateWebSearchUI() {
   }
 }
 
+const WEB_BUILDER_KEY = 'prompt_atelier_web_builder';
+
+function isWebBuilderEnabled() {
+  return localStorage.getItem(WEB_BUILDER_KEY) === 'true';
+}
+
+function setWebBuilderEnabled(enabled) {
+  localStorage.setItem(WEB_BUILDER_KEY, enabled ? 'true' : 'false');
+  updateWebBuilderUI();
+}
+
+function updateWebBuilderUI() {
+  const enabled = isWebBuilderEnabled();
+  if (webBuilderToggleBtn) {
+    if (enabled) {
+      webBuilderToggleBtn.classList.add('active', 'active-web-builder');
+    } else {
+      webBuilderToggleBtn.classList.remove('active', 'active-web-builder');
+    }
+  }
+  if (webBuilderBadge) {
+    webBuilderBadge.className = `toolbar-badge ${enabled ? 'on' : 'off'}`;
+    webBuilderBadge.textContent = enabled ? 'ON' : 'OFF';
+  }
+  if (input) {
+    if (enabled) {
+      input.placeholder = '🌐 網頁製作模式已開啟：請輸入您想製作的網頁需求（例如：手搖飲點餐網頁、個人履歷作品集、番茄鐘小工具）...';
+    } else {
+      input.placeholder = '輸入你的 prompt...';
+    }
+  }
+}
+
+function extractHtmlWebpage(text) {
+  if (!text) return null;
+  // 1. 標準 Markdown 代碼區塊 ```html <!DOCTYPE ... ``` 或 ```html <html ... ```
+  const blockMatch = text.match(/```(?:html|xml)?\s*([\s\S]*?<!DOCTYPE[\s\S]*?)```/i) ||
+                     text.match(/```(?:html|xml)?\s*(<html[\s\S]*?<\/html>)\s*```/i);
+  if (blockMatch) return blockMatch[1].trim();
+
+  // 2. 直接包含 <!DOCTYPE html> ... </html>
+  const directMatch = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
+  if (directMatch) return directMatch[1].trim();
+
+  // 3. 一般 ```html 代碼區塊且包含基礎結構
+  const anyHtmlBlock = text.match(/```html\s*([\s\S]*?)```/i);
+  if (anyHtmlBlock && (anyHtmlBlock[1].includes('<body') || anyHtmlBlock[1].includes('<div') || anyHtmlBlock[1].includes('<style'))) {
+    return anyHtmlBlock[1].trim();
+  }
+  return null;
+}
+
+function extractTitleFromHtml(html) {
+  if (!html) return '簡易自訂網頁';
+  const m = html.match(/<title[^>]*>(.*?)<\/title>/i);
+  if (m && m[1].trim()) return m[1].trim();
+  const h1 = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if (h1 && h1[1].trim()) return h1[1].replace(/<[^>]+>/g, '').trim();
+  return '簡易自訂網頁';
+}
+
+function downloadHtmlFile(content, filename) {
+  const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename || 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function attachWebPreviewIfPresent(messageEl, rawText) {
+  const htmlContent = extractHtmlWebpage(rawText);
+  if (!htmlContent) return;
+
+  // 避免重複附加
+  if (messageEl.querySelector('.web-preview-container')) return;
+
+  const title = extractTitleFromHtml(htmlContent);
+  const previewContainer = document.createElement('div');
+  previewContainer.className = 'web-preview-container';
+
+  previewContainer.innerHTML = `
+    <div class="web-preview-header">
+      <div class="web-preview-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span>網頁即時預覽：${escapeHtml(title)}</span>
+      </div>
+      <div class="web-preview-actions">
+        <div class="device-toggle-group">
+          <button type="button" class="device-btn active" data-device="desktop" title="桌面寬度視角 (100%)">💻 桌面</button>
+          <button type="button" class="device-btn" data-device="tablet" title="平板視角 (768px)">📟 平板</button>
+          <button type="button" class="device-btn" data-device="mobile" title="手機視角 (375px)">📱 手機</button>
+        </div>
+        <div class="view-toggle-group">
+          <button type="button" class="view-toggle-btn active" data-view="preview" title="即時互動預覽">👁️ 預覽</button>
+          <button type="button" class="view-toggle-btn" data-view="code" title="檢視 HTML 原始碼">💻 代碼</button>
+        </div>
+        <button type="button" class="preview-action-btn open-fullscreen-btn" title="在新分頁開啟全螢幕網頁">🚀 全螢幕</button>
+        <button type="button" class="preview-action-btn download-html-btn" title="下載 index.html 檔案">💾 下載</button>
+        <button type="button" class="preview-action-btn copy-code-btn" title="複製 HTML 程式碼">📋 複製</button>
+        <button type="button" class="preview-action-btn primary open-studio-btn" title="在網頁工坊中進一步修改與預覽">🛠️ 工坊編輯</button>
+      </div>
+    </div>
+    <div class="web-preview-viewport desktop">
+      <iframe class="web-preview-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
+      <div class="web-preview-code" style="display: none;">
+        <pre><code>${escapeHtml(htmlContent)}</code></pre>
+      </div>
+    </div>
+  `;
+
+  const iframe = previewContainer.querySelector('.web-preview-iframe');
+  const codeView = previewContainer.querySelector('.web-preview-code');
+  const viewport = previewContainer.querySelector('.web-preview-viewport');
+
+  // 載入 HTML 至 iframe
+  try {
+    iframe.srcdoc = htmlContent;
+  } catch (e) {
+    console.error('iframe srcdoc error:', e);
+  }
+
+  // 裝置視圖切換
+  previewContainer.querySelectorAll('.device-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      previewContainer.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const device = btn.getAttribute('data-device');
+      viewport.className = `web-preview-viewport ${device}`;
+    });
+  });
+
+  // 預覽 / 代碼 切換
+  previewContainer.querySelectorAll('.view-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      previewContainer.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.getAttribute('data-view');
+      if (view === 'preview') {
+        iframe.style.display = 'block';
+        codeView.style.display = 'none';
+      } else {
+        iframe.style.display = 'none';
+        codeView.style.display = 'block';
+      }
+    });
+  });
+
+  // 全螢幕 / 新分頁開啟
+  const fullscreenBtn = previewContainer.querySelector('.open-fullscreen-btn');
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', () => {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    });
+  }
+
+  // 下載 HTML
+  const downloadBtn = previewContainer.querySelector('.download-html-btn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      downloadHtmlFile(htmlContent, `${title.replace(/[\/\\:*?"<>|]/g, '_') || 'index'}.html`);
+    });
+  }
+
+  // 複製代碼
+  const copyBtn = previewContainer.querySelector('.copy-code-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(htmlContent).then(() => {
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = '✅ 已複製！';
+        setTimeout(() => copyBtn.textContent = orig, 1800);
+      });
+    });
+  }
+
+  // 在工坊中編輯
+  const studioBtn = previewContainer.querySelector('.open-studio-btn');
+  if (studioBtn) {
+    studioBtn.addEventListener('click', () => {
+      if (typeof webBuilderController !== 'undefined' && webBuilderController) {
+        webBuilderController.loadExistingCode(htmlContent, title);
+        webBuilderController.openModal();
+      }
+    });
+  }
+
+  messageEl.appendChild(previewContainer);
+}
+
 function addMessage(role, text) {
   const message = document.createElement('article');
   message.className = `message ${role}`;
@@ -1568,6 +1772,10 @@ function addMessage(role, text) {
 
   const bodyEl = message.querySelector('.message-body');
   bodyEl.textContent = text;
+
+  if (role === 'assistant') {
+    attachWebPreviewIfPresent(message, text);
+  }
 
   // 複製按鈕
   const copyBtn = message.querySelector('.copy-btn');
@@ -1645,11 +1853,12 @@ function addMessage(role, text) {
           const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: newPrompt, web_search: isWebSearchEnabled() })
+            body: JSON.stringify({ prompt: newPrompt, web_search: isWebSearchEnabled(), web_builder: isWebBuilderEnabled() })
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || '發生未知錯誤');
           respBody.textContent = data.response;
+          attachWebPreviewIfPresent(message.pairedResponse, data.response);
           updateSessionMessage(oldPrompt, newPrompt, data.response);
 
           if (isAutoSpeakEnabled() && voiceSynthesisController) {
@@ -1710,7 +1919,7 @@ async function submitPrompt(prompt) {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, web_search: isWebSearchEnabled() })
+      body: JSON.stringify({ prompt, web_search: isWebSearchEnabled(), web_builder: isWebBuilderEnabled() })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '發生未知錯誤');
@@ -1758,6 +1967,7 @@ seedEngineeringRecordsIfNeed();
 updateAuthUI();
 updateAutoSpeakUI();
 updateWebSearchUI();
+updateWebBuilderUI();
 renderHistoryList();
 
 // 語音輸入按鈕監聽
@@ -1783,6 +1993,14 @@ if (webSearchToggleBtn) {
   webSearchToggleBtn.addEventListener('click', () => {
     const nextState = !isWebSearchEnabled();
     setWebSearchEnabled(nextState);
+  });
+}
+
+// 網頁製作模式切換按鈕監聽
+if (webBuilderToggleBtn) {
+  webBuilderToggleBtn.addEventListener('click', () => {
+    const nextState = !isWebBuilderEnabled();
+    setWebBuilderEnabled(nextState);
   });
 }
 
@@ -4723,9 +4941,395 @@ function updateCalendarBadge() {
   }
 }
 
-// 頁面載入完成後統一初始化提問日曆與預設會話
+// ==========================================
+// 11. 簡易網頁製作工坊控制器 (Web Creator Studio Controller)
+// ==========================================
+class WebBuilderController {
+  constructor() {
+    this.modal = document.querySelector('#webBuilderModal');
+    this.closeBtn = document.querySelector('#closeWebBuilderModal');
+    this.sidebarBtn = document.querySelector('#sidebarWebBuilderBtn');
+    this.toggleBtn = document.querySelector('#webBuilderToggleBtn');
+    this.badge = document.querySelector('#webBuilderBadge');
+
+    this.promptInput = document.querySelector('#webBuilderPromptInput');
+    this.generateBtn = document.querySelector('#webBuilderGenerateBtn');
+    this.stylesGroup = document.querySelector('#builderStylesGroup');
+    this.presetChips = document.querySelectorAll('.preset-chip');
+
+    this.refineSection = document.querySelector('#builderRefineSection');
+    this.refineInput = document.querySelector('#webBuilderRefineInput');
+    this.refineBtn = document.querySelector('#webBuilderRefineBtn');
+
+    this.pageTitleEl = document.querySelector('#canvasPageTitle');
+    this.statusBadge = document.querySelector('#canvasStatusBadge');
+    this.viewport = document.querySelector('#canvasViewport');
+    this.emptyState = document.querySelector('#canvasEmptyState');
+    this.iframe = document.querySelector('#canvasPreviewIframe');
+    this.codeView = document.querySelector('#canvasCodeView');
+    this.codeContent = document.querySelector('#canvasCodeContent');
+    this.loadingOverlay = document.querySelector('#canvasLoadingOverlay');
+    this.loadingText = document.querySelector('#canvasLoadingText');
+
+    this.deviceBtns = document.querySelectorAll('.canvas-device-btn');
+    this.modeBtns = document.querySelectorAll('.canvas-mode-btn');
+
+    this.fullscreenBtn = document.querySelector('#canvasFullscreenBtn');
+    this.downloadBtn = document.querySelector('#canvasDownloadBtn');
+    this.copyBtn = document.querySelector('#canvasCopyBtn');
+
+    this.currentHtml = '';
+    this.currentTitle = '簡易自訂網頁';
+    this.selectedStyle = '現代極簡 (Clean Minimalist)';
+
+    this.presets = {
+      cafe: {
+        prompt: '做一個精緻的義式手作咖啡廳網頁「Amalfi Coffee」，包含：Hero 橫幅主無視覺與品牌理念、人氣特調手沖與甜點菜單卡片、咖啡豆產地介紹、線上訂位預約表單，以及營業時間與聯絡資訊。',
+        style: '日系淡雅清新 (Soft Aesthetic)'
+      },
+      portfolio: {
+        prompt: '做一個現代極簡質感的個人作品集與履歷網頁，包含：個人簡介與專業頭像、技能樹 (Skills) 動態進度條、精選專案卡片網格 (具備 Hover 懸浮縮放與點擊燈箱詳情)、職涯工作時間軸，以及社群連結與聯絡我表單。',
+        style: '現代極簡 (Clean Minimalist)'
+      },
+      landing: {
+        prompt: '做一個新創科技 SaaS 產品的 Landing Page「TaskPulse 智慧任務流」，包含：震撼的漸層 Hero 區塊與 CTA 立即註冊按鈕、核心產品功能三大亮點圖示卡片、用戶即時好評滾動推薦、三種方案價目表 (月繳/年繳切換)，以及常見問題 FAQ 手風琴摺疊選單。',
+        style: '科技酷炫暗黑 (Cyber Dark Mode)'
+      },
+      todo: {
+        prompt: '做一個功能完整的待辦事項與番茄鐘效率管理 Web App，包含：代辦清單的新增/刪除/完成勾選/分類篩選（全部、未完成、已完成）、待辦計數統計，以及內建 25 分鐘番茄鐘倒數計時器（附帶開始/暫停/重置功能與進度條圓環）。',
+        style: '活力繽紛漸層 (Vibrant Gradient)'
+      },
+      game: {
+        prompt: '做一個趣味且視覺華麗的「幸運大轉盤抽獎遊戲」，包含：現代 CSS Canvas 繪製的多色獎品轉盤、旋轉指針、開始抽獎按鈕與旋轉減速物理動效、中獎提示對話框，以及即時更新的抽獎歷史紀錄清單。',
+        style: '活力繽紛漸層 (Vibrant Gradient)'
+      },
+      store: {
+        prompt: '做一個設計師文創選物店的線上商品展示網頁「Urban Crafted」，包含：商品分類標籤切換（生活家居、皮件包款、文具紙品）、精美商品卡片網格（含價格、評分與加入購物車按鈕）、右上角即時購物車數量與總額計算側邊欄，以及模擬結帳成功的感謝彈窗。',
+        style: '專業高端商務 (Corporate Elegant)'
+      }
+    };
+  }
+
+  init() {
+    this.bindEvents();
+    updateWebBuilderUI();
+  }
+
+  bindEvents() {
+    // 側邊欄開啟 Studio Modal
+    if (this.sidebarBtn) {
+      this.sidebarBtn.addEventListener('click', () => {
+        this.openModal();
+      });
+    }
+
+    // 關閉 Modal
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => {
+        this.closeModal();
+      });
+    }
+
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.closeModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal && this.modal.style.display === 'flex') {
+        this.closeModal();
+      }
+    });
+
+    // 風格標籤切換
+    if (this.stylesGroup) {
+      this.stylesGroup.querySelectorAll('.style-badge').forEach(badge => {
+        badge.addEventListener('click', () => {
+          this.stylesGroup.querySelectorAll('.style-badge').forEach(b => b.classList.remove('active'));
+          badge.classList.add('active');
+          this.selectedStyle = badge.getAttribute('data-style');
+        });
+      });
+    }
+
+    // 快速範本點擊
+    this.presetChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const presetKey = chip.getAttribute('data-preset');
+        const preset = this.presets[presetKey];
+        if (preset) {
+          if (this.promptInput) this.promptInput.value = preset.prompt;
+          // 選中對應風格
+          if (this.stylesGroup) {
+            this.stylesGroup.querySelectorAll('.style-badge').forEach(b => {
+              if (b.getAttribute('data-style') === preset.style) {
+                b.classList.add('active');
+                this.selectedStyle = preset.style;
+              } else {
+                b.classList.remove('active');
+              }
+            });
+          }
+        }
+      });
+    });
+
+    // 生成按鈕
+    if (this.generateBtn) {
+      this.generateBtn.addEventListener('click', () => {
+        this.handleGenerate();
+      });
+    }
+
+    // 疊代修改按鈕
+    if (this.refineBtn) {
+      this.refineBtn.addEventListener('click', () => {
+        this.handleRefine();
+      });
+    }
+    if (this.refineInput) {
+      this.refineInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.handleRefine();
+        }
+      });
+    }
+
+    // 裝置切換
+    this.deviceBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.deviceBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const device = btn.getAttribute('data-device');
+        this.viewport.className = `canvas-viewport ${device}`;
+      });
+    });
+
+    // 模式切換（預覽 / 代碼）
+    this.modeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.getAttribute('data-mode');
+        if (mode === 'preview') {
+          if (this.currentHtml) {
+            this.iframe.style.display = 'block';
+            this.emptyState.style.display = 'none';
+          } else {
+            this.emptyState.style.display = 'flex';
+          }
+          this.codeView.style.display = 'none';
+        } else {
+          this.iframe.style.display = 'none';
+          this.emptyState.style.display = 'none';
+          this.codeView.style.display = 'block';
+        }
+      });
+    });
+
+    // 全螢幕按鈕
+    if (this.fullscreenBtn) {
+      this.fullscreenBtn.addEventListener('click', () => {
+        if (!this.currentHtml) return;
+        const blob = new Blob([this.currentHtml], { type: 'text/html;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      });
+    }
+
+    // 下載按鈕
+    if (this.downloadBtn) {
+      this.downloadBtn.addEventListener('click', () => {
+        if (!this.currentHtml) return;
+        downloadHtmlFile(this.currentHtml, `${this.currentTitle.replace(/[\/\\:*?"<>|]/g, '_') || 'index'}.html`);
+      });
+    }
+
+    // 複製代碼
+    if (this.copyBtn) {
+      this.copyBtn.addEventListener('click', () => {
+        if (!this.currentHtml) return;
+        navigator.clipboard.writeText(this.currentHtml).then(() => {
+          const orig = this.copyBtn.textContent;
+          this.copyBtn.textContent = '✅ 已複製！';
+          setTimeout(() => this.copyBtn.textContent = orig, 1800);
+        });
+      });
+    }
+  }
+
+  openModal() {
+    if (this.modal) {
+      this.modal.style.display = 'flex';
+      if (typeof closeMobileSidebar === 'function') closeMobileSidebar();
+      if (this.promptInput) this.promptInput.focus();
+    }
+  }
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.style.display = 'none';
+    }
+  }
+
+  loadExistingCode(html, title) {
+    this.currentHtml = html;
+    this.currentTitle = title || extractTitleFromHtml(html);
+    this.renderCanvas();
+    if (this.refineSection) this.refineSection.style.display = 'block';
+  }
+
+  async handleGenerate() {
+    const rawPrompt = this.promptInput ? this.promptInput.value.trim() : '';
+    if (!rawPrompt) {
+      alert('請先輸入您想製作的網頁需求或點選上方範本！');
+      return;
+    }
+
+    const fullPrompt = `請依照以下需求與風格製作一個完整的簡易單頁網頁：\n【網頁功能與版面需求】：${rawPrompt}\n【指定風格偏好】：${this.selectedStyle}`;
+
+    this.setLoading(true, 'Gura AI 正在為您設計版面與撰寫程式碼...');
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: fullPrompt,
+          web_search: false,
+          web_builder: true
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '生成失敗');
+
+      const html = extractHtmlWebpage(data.response);
+      if (!html) {
+        throw new Error('未能在 AI 回應中解析出有效 HTML 網頁代碼，請嘗試更詳細的需求描述。');
+      }
+
+      this.currentHtml = html;
+      this.currentTitle = extractTitleFromHtml(html);
+      this.renderCanvas();
+
+      if (this.refineSection) this.refineSection.style.display = 'block';
+
+      // 同時在主聊天記錄中增加一筆記錄，讓歷史留存
+      appendMessageToCurrentSession('user', `[網頁工坊製作] ${rawPrompt}`);
+      const asstMsg = addMessage('assistant', data.response);
+      appendMessageToCurrentSession('assistant', data.response);
+
+    } catch (err) {
+      alert('製作失敗: ' + err.message);
+    } finally {
+      this.setLoading(false);
+    }
+  }
+
+  async handleRefine() {
+    if (!this.currentHtml) {
+      alert('請先生成網頁後再進行修改！');
+      return;
+    }
+    const refineText = this.refineInput ? this.refineInput.value.trim() : '';
+    if (!refineText) {
+      alert('請輸入您想修改的內容（例如：按鈕改成圓角、背景換成藍色）！');
+      return;
+    }
+
+    const fullPrompt = `我先前製作了以下網頁，請根據我的修改要求對其進行更新，並輸出完整的單一 HTML 檔案。\n【目前網頁原始碼概要】：\n\`\`\`html\n${this.currentHtml}\n\`\`\`\n\n【我的修改要求】：${refineText}`;
+
+    this.setLoading(true, 'Gura AI 正在依照要求更新網頁代碼...');
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: fullPrompt,
+          web_search: false,
+          web_builder: true
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '更新失敗');
+
+      const html = extractHtmlWebpage(data.response);
+      if (!html) {
+        throw new Error('未能解析出更新後的 HTML 網頁代碼。');
+      }
+
+      this.currentHtml = html;
+      this.currentTitle = extractTitleFromHtml(html);
+      this.renderCanvas();
+      if (this.refineInput) this.refineInput.value = '';
+
+      // 聊天記錄更新
+      appendMessageToCurrentSession('user', `[網頁工坊修改] ${refineText}`);
+      const asstMsg = addMessage('assistant', data.response);
+      appendMessageToCurrentSession('assistant', data.response);
+
+    } catch (err) {
+      alert('修改失敗: ' + err.message);
+    } finally {
+      this.setLoading(false);
+    }
+  }
+
+  renderCanvas() {
+    if (!this.currentHtml) return;
+
+    if (this.pageTitleEl) this.pageTitleEl.textContent = this.currentTitle;
+    if (this.statusBadge) {
+      this.statusBadge.textContent = '已就緒 (可互動)';
+      this.statusBadge.style.background = '#ecfdf5';
+      this.statusBadge.style.color = '#065f46';
+    }
+
+    if (this.emptyState) this.emptyState.style.display = 'none';
+    if (this.iframe) {
+      this.iframe.style.display = 'block';
+      this.iframe.srcdoc = this.currentHtml;
+    }
+    if (this.codeContent) {
+      this.codeContent.textContent = this.currentHtml;
+    }
+
+    if (this.fullscreenBtn) this.fullscreenBtn.disabled = false;
+    if (this.downloadBtn) this.downloadBtn.disabled = false;
+    if (this.copyBtn) this.copyBtn.disabled = false;
+  }
+
+  setLoading(isLoading, text = '建構中...') {
+    if (this.loadingOverlay) {
+      this.loadingOverlay.style.display = isLoading ? 'flex' : 'none';
+    }
+    if (this.loadingText) {
+      this.loadingText.textContent = text;
+    }
+    if (this.generateBtn) {
+      this.generateBtn.disabled = isLoading;
+    }
+    if (this.refineBtn) {
+      this.refineBtn.disabled = isLoading;
+    }
+  }
+}
+
+// 實例化 WebBuilder 控制器
+function initWebBuilder() {
+  if (typeof window !== 'undefined' && !window.webBuilderController) {
+    window.webBuilderController = new WebBuilderController();
+    webBuilderController = window.webBuilderController;
+    webBuilderController.init();
+  }
+  return window.webBuilderController || webBuilderController;
+}
+
+// 頁面載入完成後統一初始化提問日曆、網頁工坊與預設會話
 function initAppFull() {
   initQuestionCalendar();
+  initWebBuilder();
   if (!currentSessionId) {
     loadSession(ENGINEERING_DOC_SESSION_ID);
   }

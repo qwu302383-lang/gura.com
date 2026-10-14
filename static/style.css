@@ -4305,3 +4305,672 @@ button { cursor: pointer; }
   }
 }
 
+/* ==========================================================================
+   11. 簡易網頁製作模式 (Web Page Builder Mode) 與即時互動預覽卡片
+   ========================================================================== */
+
+/* 工具列開關樣式 */
+#webBuilderBadge.on {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
+}
+
+.toolbar-pill-btn.active-web-builder {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+/* 對話訊息內嵌：網頁即時互動預覽卡片 (In-Message Web Preview Card) */
+.web-preview-container {
+  margin: 14px 0 8px 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.web-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.web-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.web-preview-title svg {
+  color: #0284c7;
+}
+
+.web-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.device-toggle-group, .view-toggle-group {
+  display: inline-flex;
+  background: #e2e8f0;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.device-btn, .view-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+
+.device-btn.active, .view-toggle-btn.active {
+  background: #ffffff;
+  color: #0284c7;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.preview-action-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preview-action-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.preview-action-btn.primary {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.preview-action-btn.primary:hover {
+  background: #0369a1;
+}
+
+.web-preview-viewport {
+  background: #f1f5f9;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 420px;
+  max-height: 580px;
+  overflow: auto;
+  transition: all 0.25s ease;
+}
+
+.web-preview-viewport.desktop {
+  padding: 6px;
+}
+
+.web-preview-viewport.desktop .web-preview-iframe {
+  width: 100%;
+  height: 460px;
+  border-radius: 8px;
+}
+
+.web-preview-viewport.tablet .web-preview-iframe {
+  width: 768px;
+  max-width: 100%;
+  height: 480px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.web-preview-viewport.mobile .web-preview-iframe {
+  width: 375px;
+  max-width: 100%;
+  height: 520px;
+  border-radius: 20px;
+  border: 4px solid #1e293b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.web-preview-iframe {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  transition: width 0.25s ease, height 0.25s ease;
+}
+
+.web-preview-code {
+  width: 100%;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 14px;
+  max-height: 460px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.web-preview-code pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 簡易網頁製作工坊 Modal (Web Creator Studio) */
+.web-builder-modal-card {
+  width: min(1180px, calc(100vw - 28px));
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.web-builder-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.web-builder-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.web-builder-modal-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.web-builder-modal-title {
+  margin: 0 0 4px 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.web-builder-modal-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.web-builder-main-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.web-builder-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.builder-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.builder-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.builder-presets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.preset-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preset-chip:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+.preset-icon {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.preset-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.preset-text strong {
+  font-size: 12px;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.preset-text small {
+  font-size: 10.5px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.builder-styles-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.style-badge {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.style-badge:hover {
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.style-badge.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.builder-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.builder-textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.builder-btn-row {
+  margin-top: 4px;
+}
+
+.builder-primary-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #10b981, #0284c7);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+}
+
+.builder-primary-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.builder-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.refine-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.builder-input {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+}
+
+.builder-input:focus {
+  border-color: #0284c7;
+}
+
+.builder-secondary-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.builder-secondary-btn:hover {
+  background: #0369a1;
+}
+
+/* 畫布視區 (Canvas) */
+.web-builder-canvas {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.canvas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.canvas-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvas-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.canvas-page-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.canvas-status-badge {
+  font-size: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.canvas-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.canvas-device-selector, .canvas-mode-selector {
+  display: inline-flex;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.canvas-device-btn, .canvas-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #64748b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.canvas-device-btn.active, .canvas-mode-btn.active {
+  background: #ffffff;
+  color: #0284c7;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.canvas-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.canvas-action-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.canvas-action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0284c7;
+}
+
+.canvas-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.canvas-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+  padding: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.canvas-viewport.desktop .canvas-iframe {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.canvas-viewport.tablet .canvas-iframe {
+  width: 768px;
+  max-width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.canvas-viewport.mobile .canvas-iframe {
+  width: 375px;
+  max-width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  border: 4px solid #1e293b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.canvas-iframe {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.canvas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.canvas-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.canvas-empty-state h3 {
+  margin: 0 0 6px 0;
+  color: #1e293b;
+  font-size: 16px;
+}
+
+.canvas-empty-state p {
+  margin: 0;
+  font-size: 13px;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.canvas-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.canvas-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3.5px solid #e2e8f0;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: canvasSpin 0.8s linear infinite;
+}
+
+@keyframes canvasSpin {
+  to { transform: rotate(360deg); }
+}
+
+.canvas-code-view {
+  width: 100%;
+  height: 100%;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.canvas-code-view pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 響應式調整 */
+@media (max-width: 860px) {
+  .web-builder-main-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .web-builder-sidebar {
+    max-height: 300px;
+  }
+  .web-builder-canvas {
+    min-height: 400px;
+  }
+}
+

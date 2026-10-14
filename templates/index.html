@@ -182,6 +182,16 @@
               <span>提問日曆</span>
               <span id="sidebarCalendarCountBadge" class="sidebar-badge calendar-count-badge" style="display: none;">0</span>
             </button>
+
+            <button id="sidebarWebBuilderBtn" class="sidebar-item-btn" type="button" title="簡易網頁工坊 (依需求生成互動式網頁與即時預覽)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span>簡易網頁工坊</span>
+              <span class="sidebar-badge new-badge" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: white;">NEW</span>
+            </button>
           </div>
 
           <!-- 筆記本分類 (直接連結至 NotebookLM) -->
@@ -328,8 +338,18 @@
 
 
           <form id="chatForm" class="composer">
-            <!-- 拓展工具列：即時聯網搜尋開關 + 手機聯動中心 + 自動語音朗讀開關 -->
+            <!-- 拓展工具列：網頁製作模式 + 即時聯網搜尋開關 + 手機聯動中心 + 自動語音朗讀開關 -->
             <div class="composer-toolbar">
+              <button type="button" id="webBuilderToggleBtn" class="toolbar-pill-btn" title="開啟/關閉簡易網頁製作模式（輸入要求即刻生成可預覽之網頁）">
+                <svg class="toolbar-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span>網頁製作模式</span>
+                <span id="webBuilderBadge" class="toolbar-badge off">OFF</span>
+              </button>
+
               <button type="button" id="webSearchToggleBtn" class="toolbar-pill-btn" title="開啟/關閉即時聯網搜尋（讓 Gura 檢索最新資訊）">
                 <svg class="toolbar-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -1295,6 +1315,156 @@
       <button type="button" id="cancelWebTimerBtn" class="timer-banner-cancel-btn" title="關閉計時/停止響鈴">停止</button>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=20"></script>
+    <!-- 簡易網頁製作工坊 Modal (Web Creator Studio) -->
+    <div id="webBuilderModal" class="modal-overlay" style="display: none;">
+      <div class="web-builder-modal-card">
+        <div class="web-builder-modal-header">
+          <div class="web-builder-header-left">
+            <span class="web-builder-modal-icon">🌐</span>
+            <div>
+              <h2 class="web-builder-modal-title">簡易網頁製作工坊 (Web Creator Studio)</h2>
+              <p class="web-builder-modal-subtitle">依照您的自訂需求，即時由 Gura AI 建構具備現代視覺、RWD 響應式排版與原生 JS 互動動效的完整單頁網頁</p>
+            </div>
+          </div>
+          <button id="closeWebBuilderModal" class="modal-close-btn" type="button" aria-label="關閉視窗">✕</button>
+        </div>
+
+        <div class="web-builder-main-layout">
+          <!-- 左側：需求控制與範本設定 -->
+          <div class="web-builder-sidebar">
+            <div class="builder-section">
+              <label class="builder-label">💡 快速範本推薦 (點擊立即套用)：</label>
+              <div class="builder-presets-grid">
+                <button type="button" class="preset-chip" data-preset="cafe">
+                  <span class="preset-icon">☕</span>
+                  <div class="preset-text">
+                    <strong>咖啡館 / 餐廳菜單</strong>
+                    <small>菜色展示、特色推薦、預約表單</small>
+                  </div>
+                </button>
+                <button type="button" class="preset-chip" data-preset="portfolio">
+                  <span class="preset-icon">💼</span>
+                  <div class="preset-text">
+                    <strong>個人履歷 / 作品集</strong>
+                    <small>技能樹、作品燈箱、經歷時間軸</small>
+                  </div>
+                </button>
+                <button type="button" class="preset-chip" data-preset="landing">
+                  <span class="preset-icon">🚀</span>
+                  <div class="preset-text">
+                    <strong>科技新創 / Landing Page</strong>
+                    <small>Hero主無視覺、功能清單、價格表</small>
+                  </div>
+                </button>
+                <button type="button" class="preset-chip" data-preset="todo">
+                  <span class="preset-icon">📝</span>
+                  <div class="preset-text">
+                    <strong>待辦清單 / 番茄鐘</strong>
+                    <small>代辦增刪查改、倒數計時、數據統計</small>
+                  </div>
+                </button>
+                <button type="button" class="preset-chip" data-preset="game">
+                  <span class="preset-icon">🎮</span>
+                  <div class="preset-text">
+                    <strong>幸運輪盤 / 趣味小遊戲</strong>
+                    <small>轉盤旋轉、得分記錄、音效視覺反饋</small>
+                  </div>
+                </button>
+                <button type="button" class="preset-chip" data-preset="store">
+                  <span class="preset-icon">🛒</span>
+                  <div class="preset-text">
+                    <strong>品牌商品展示 / 櫥窗</strong>
+                    <small>分類篩選、購物車計算、結帳彈窗</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="builder-section">
+              <label class="builder-label">🎨 風格美學偏好：</label>
+              <div class="builder-styles-group" id="builderStylesGroup">
+                <button type="button" class="style-badge active" data-style="現代極簡 (Clean Minimalist)">現代極簡</button>
+                <button type="button" class="style-badge" data-style="科技酷炫暗黑 (Cyber Dark Mode)">科技暗黑</button>
+                <button type="button" class="style-badge" data-style="活力繽紛漸層 (Vibrant Gradient)">活力繽紛</button>
+                <button type="button" class="style-badge" data-style="日系淡雅清新 (Soft Aesthetic)">日系清新</button>
+                <button type="button" class="style-badge" data-style="專業高端商務 (Corporate Elegant)">高端商務</button>
+              </div>
+            </div>
+
+            <div class="builder-section">
+              <label class="builder-label" for="webBuilderPromptInput">📝 網頁需求描述：</label>
+              <textarea id="webBuilderPromptInput" class="builder-textarea" rows="4" placeholder="請詳細描述你想製作的網頁，例如：做一個手搖飲料店線上點餐網頁，包含推薦茶飲卡片、冰量糖度選擇、購物車總額即時計算與訂購完成彈窗..."></textarea>
+              <div class="builder-btn-row">
+                <button type="button" id="webBuilderGenerateBtn" class="builder-primary-btn">
+                  <span>🚀 開始建構網頁</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 疊代修改區 -->
+            <div class="builder-section builder-refine-section" id="builderRefineSection" style="display: none;">
+              <label class="builder-label">✨ 對目前網頁進行疊代修改：</label>
+              <div class="refine-input-row">
+                <input type="text" id="webBuilderRefineInput" class="builder-input" placeholder="例如：將按鈕改為膠囊圓角、增加顧客好評滑動區塊..." />
+                <button type="button" id="webBuilderRefineBtn" class="builder-secondary-btn">修改</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右側：即時畫布與預覽 -->
+          <div class="web-builder-canvas">
+            <div class="canvas-header">
+              <div class="canvas-title-wrap">
+                <span class="canvas-dot"></span>
+                <span id="canvasPageTitle" class="canvas-page-title">尚未生成網頁</span>
+                <span id="canvasStatusBadge" class="canvas-status-badge">等待輸入</span>
+              </div>
+
+              <div class="canvas-controls">
+                <!-- 裝置切換 -->
+                <div class="canvas-device-selector">
+                  <button type="button" class="canvas-device-btn active" data-device="desktop" title="桌面寬螢幕視角 (100%)">💻 桌面</button>
+                  <button type="button" class="canvas-device-btn" data-device="tablet" title="平板視角 (768px)">📟 平板</button>
+                  <button type="button" class="canvas-device-btn" data-device="mobile" title="手機視角 (375px)">📱 手機</button>
+                </div>
+
+                <!-- 模式切換 -->
+                <div class="canvas-mode-selector">
+                  <button type="button" class="canvas-mode-btn active" data-mode="preview" title="即時互動預覽">👁️ 預覽</button>
+                  <button type="button" class="canvas-mode-btn" data-mode="code" title="檢視 HTML 原始碼">💻 代碼</button>
+                </div>
+
+                <!-- 動作按鈕 -->
+                <div class="canvas-actions">
+                  <button type="button" id="canvasFullscreenBtn" class="canvas-action-btn" title="在新分頁開啟全螢幕網頁" disabled>🚀 新分頁</button>
+                  <button type="button" id="canvasDownloadBtn" class="canvas-action-btn" title="下載 index.html 檔案" disabled>💾 下載</button>
+                  <button type="button" id="canvasCopyBtn" class="canvas-action-btn" title="複製完整 HTML 程式碼" disabled>📋 複製</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="canvas-body">
+              <div id="canvasViewport" class="canvas-viewport desktop">
+                <div id="canvasEmptyState" class="canvas-empty-state">
+                  <div class="canvas-empty-icon">🎨</div>
+                  <h3>你的網頁即時畫布</h3>
+                  <p>在左側輸入需求或點選範本，Gura AI 將即時為你建構可互動、美觀且具備 RWD 的完整網頁！</p>
+                </div>
+                <iframe id="canvasPreviewIframe" class="canvas-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin" style="display: none;"></iframe>
+                <div id="canvasCodeView" class="canvas-code-view" style="display: none;">
+                  <pre><code id="canvasCodeContent"></code></pre>
+                </div>
+                <div id="canvasLoadingOverlay" class="canvas-loading-overlay" style="display: none;">
+                  <div class="canvas-spinner"></div>
+                  <p id="canvasLoadingText">Gura AI 正在撰寫 HTML / CSS / JS 網頁代碼...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}?v=21"></script>
   </body>
 </html>
