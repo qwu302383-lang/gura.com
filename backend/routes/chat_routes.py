@@ -16,19 +16,43 @@ from backend.config import SITES_DIR
 def extract_and_save_site(response_text):
     if not response_text:
         return None, None
+
+    # 1. 完全閉合之 Markdown html 區塊
     m = re.search(r'```(?:html|xml)?\s*([\s\S]*?<!DOCTYPE[\s\S]*?)```', response_text, re.I)
     if not m:
         m = re.search(r'```(?:html|xml)?\s*(<html[\s\S]*?<\/html>)\s*```', response_text, re.I)
     if not m:
         m = re.search(r'(<!DOCTYPE\s+html[\s\S]*?<\/html>)', response_text, re.I)
     if not m:
+        m = re.search(r'(<html[\s\S]*?<\/html>)', response_text, re.I)
+    if not m:
         m = re.search(r'```html\s*([\s\S]*?)```', response_text, re.I)
         if m and ('<body' in m.group(1).lower() or '<style' in m.group(1).lower() or '<div' in m.group(1).lower()):
             pass
         else:
             m = None
+
+    html = None
     if m:
         html = m.group(1).strip()
+    else:
+        # 2. 寬容未閉合區塊 (例如長代碼未輸出閉合標記或結尾受截斷)
+        m2 = re.search(r'```html\s*([\s\S]+)', response_text, re.I)
+        if m2:
+            content = re.sub(r'```.*$', '', m2.group(1).strip(), flags=re.DOTALL).strip()
+            if '<body' in content.lower() or '<style' in content.lower() or '<head' in content.lower() or '<!doctype' in content.lower():
+                if not content.endswith('</html>'):
+                    content += "\n</body>\n</html>"
+                html = content
+        if not html:
+            m3 = re.search(r'(<!DOCTYPE\s+html[\s\S]+)', response_text, re.I) or re.search(r'(<html[\s\S]+)', response_text, re.I)
+            if m3:
+                content = re.sub(r'```.*$', '', m3.group(1).strip(), flags=re.DOTALL).strip()
+                if not content.endswith('</html>'):
+                    content += "\n</body>\n</html>"
+                html = content
+
+    if html:
         title_m = re.search(r'<title[^>]*>(.*?)</title>', html, re.I)
         title = title_m.group(1).strip() if title_m and title_m.group(1).strip() else "簡易自訂網頁"
         

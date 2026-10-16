@@ -26,8 +26,8 @@ API_KEY = os.getenv("GEMINI_API_KEY", "").strip() or DEFAULT_API_KEY
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
 
 FALLBACK_MODELS = [
-    "gemini-3.6-flash",
     "gemini-3.5-flash",
+    "gemini-3.6-flash",
     "gemini-3.1-flash-lite",
     "gemini-3.8-flash",
     "gemini-3.7-flash",
@@ -272,8 +272,7 @@ def generate_chat_reply(prompt, web_search=False, web_builder=False):
             "     ...\n"
             "     </html>\n"
             "     ```\n"
-            "   - 在代碼區塊之前：以 2~3 句話簡要介紹此網頁的設計理念與核心功能。\n"
-            "   - 在代碼區塊之後：附上使用引導與快捷操作提示。\n"
+            "   - 【極為重要】：請直接以 ```html 開始輸出完整 HTML 檔案，不要輸出代碼區塊以外的冗長閒聊或前言，務必確保代碼完整閉合於 </html> 與 ``` 之中！\n"
             "7. 【疊代修改適配】：如果使用者的要求是在先前製作的網頁上做修改或調整，請在保留原有所有結構與功能的基礎上進行改進，並輸出更新後的完整 HTML 檔案。\n"
         )
         augmented_instruction += web_builder_instruction
@@ -289,7 +288,7 @@ def generate_chat_reply(prompt, web_search=False, web_builder=False):
                 "請結合上述即時資訊回答使用者，並在回答中提及最新資訊。"
             )
 
-    preferred_model = os.getenv("GEMINI_MODEL", "").strip() or MODEL or "gemini-3.6-flash"
+    preferred_model = os.getenv("GEMINI_MODEL", "").strip() or MODEL or "gemini-3.5-flash"
     models_to_try = [preferred_model] + [m for m in FALLBACK_MODELS if m != preferred_model]
 
     headers = {
@@ -305,8 +304,8 @@ def generate_chat_reply(prompt, web_search=False, web_builder=False):
         },
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.7 if is_web_builder else 0.8,
-            "maxOutputTokens": 8192,
+            "temperature": 0.6 if is_web_builder else 0.8,
+            "maxOutputTokens": 16384 if is_web_builder else 8192,
         }
     }
 

@@ -1565,20 +1565,40 @@ function updateWebBuilderUI() {
 
 function extractHtmlWebpage(text) {
   if (!text) return null;
-  // 1. 標準 Markdown 代碼區塊 ```html <!DOCTYPE ... ``` 或 ```html <html ... ```
+  // 1. 標準閉合之 Markdown html 區塊
   const blockMatch = text.match(/```(?:html|xml)?\s*([\s\S]*?<!DOCTYPE[\s\S]*?)```/i) ||
-                     text.match(/```(?:html|xml)?\s*(<html[\s\S]*?<\/html>)\s*```/i);
+                     text.match(/```(?:html|xml)?\s*(<html[\s\S]*?<\/html>)\s*```/i) ||
+                     text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i) ||
+                     text.match(/(<html[\s\S]*?<\/html>)/i);
   if (blockMatch) return blockMatch[1].trim();
 
-  // 2. 直接包含 <!DOCTYPE html> ... </html>
-  const directMatch = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
-  if (directMatch) return directMatch[1].trim();
-
-  // 3. 一般 ```html 代碼區塊且包含基礎結構
   const anyHtmlBlock = text.match(/```html\s*([\s\S]*?)```/i);
   if (anyHtmlBlock && (anyHtmlBlock[1].includes('<body') || anyHtmlBlock[1].includes('<div') || anyHtmlBlock[1].includes('<style'))) {
     return anyHtmlBlock[1].trim();
   }
+
+  // 2. 寬容未閉合區塊 (例如長代碼未輸出閉合標記或結尾受截斷)
+  const unclosedBlock = text.match(/```html\s*([\s\S]+)/i);
+  if (unclosedBlock) {
+    let content = unclosedBlock[1].replace(/```[\s\S]*$/, '').trim();
+    if (content.toLowerCase().includes('<body') || content.toLowerCase().includes('<style') || content.toLowerCase().includes('<!doctype') || content.toLowerCase().includes('<div')) {
+      if (!content.toLowerCase().includes('</html>')) {
+        content += '\n</body>\n</html>';
+      }
+      return content;
+    }
+  }
+
+  // 3. 直接找 <!DOCTYPE 或 <html 起始
+  const directStart = text.match(/(<!DOCTYPE\s+html[\s\S]+)/i) || text.match(/(<html[\s\S]+)/i);
+  if (directStart) {
+    let content = directStart[1].replace(/```[\s\S]*$/, '').trim();
+    if (!content.toLowerCase().includes('</html>')) {
+      content += '\n</body>\n</html>';
+    }
+    return content;
+  }
+
   return null;
 }
 
