@@ -3890,6 +3890,9 @@ button { cursor: pointer; }
   border-radius: 4px;
   transition: all 0.15s ease;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .calendar-quick-link:hover {

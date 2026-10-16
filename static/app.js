@@ -4801,25 +4801,41 @@ class QuestionCalendarController {
   renderQuestionsList() {
     if (!this.questionsList || !this.selectedDateTitle) return;
 
-    this.selectedDateTitle.textContent = this.formatDisplayDate(this.selectedDateKey);
-
     const dateMap = this.getQuestionsGroupedByDate();
-    const rawQuestions = dateMap[this.selectedDateKey] || [];
+    const isGlobalSearch = Boolean(this.filterKeyword && this.filterKeyword.trim());
+    let filtered = [];
 
-    let filtered = rawQuestions;
-    if (this.filterKeyword) {
-      const kw = this.filterKeyword.toLowerCase();
-      filtered = rawQuestions.filter((q) => {
-        return (
-          (q.text && q.text.toLowerCase().includes(kw)) ||
-          (q.sessionTitle && q.sessionTitle.toLowerCase().includes(kw)) ||
-          (q.responseText && q.responseText.toLowerCase().includes(kw))
-        );
+    if (isGlobalSearch) {
+      const kw = this.filterKeyword.trim().toLowerCase();
+      this.selectedDateTitle.textContent = `🔍 搜尋對話關鍵字：「${this.filterKeyword.trim()}」`;
+
+      // 搜尋所有日期的問題與歷史對話
+      Object.entries(dateMap).forEach(([dKey, qList]) => {
+        qList.forEach((q) => {
+          if (
+            (q.text && q.text.toLowerCase().includes(kw)) ||
+            (q.sessionTitle && q.sessionTitle.toLowerCase().includes(kw)) ||
+            (q.responseText && q.responseText.toLowerCase().includes(kw))
+          ) {
+            filtered.push({ ...q, dateKey: dKey });
+          }
+        });
       });
-    }
 
-    if (this.dateQuestionCountBadge) {
-      this.dateQuestionCountBadge.textContent = `${filtered.length} 則提問`;
+      // 依時間由新至舊排序
+      filtered.sort((a, b) => b.timestamp - a.timestamp);
+
+      if (this.dateQuestionCountBadge) {
+        this.dateQuestionCountBadge.textContent = `共 ${filtered.length} 筆對話結果`;
+      }
+    } else {
+      this.selectedDateTitle.textContent = this.formatDisplayDate(this.selectedDateKey);
+      const rawQuestions = dateMap[this.selectedDateKey] || [];
+      filtered = rawQuestions.map((q) => ({ ...q, dateKey: this.selectedDateKey }));
+
+      if (this.dateQuestionCountBadge) {
+        this.dateQuestionCountBadge.textContent = `${filtered.length} 則提問`;
+      }
     }
 
     this.questionsList.innerHTML = '';
@@ -4828,7 +4844,7 @@ class QuestionCalendarController {
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'calendar-empty-state';
 
-      if (rawQuestions.length === 0) {
+      if (!isGlobalSearch) {
         emptyDiv.innerHTML = `
           <div class="calendar-empty-icon">🏖️</div>
           <strong class="calendar-empty-title">這一天尚未有提問紀錄</strong>
@@ -4847,8 +4863,8 @@ class QuestionCalendarController {
       } else {
         emptyDiv.innerHTML = `
           <div class="calendar-empty-icon">🔍</div>
-          <strong class="calendar-empty-title">查無符合關鍵字的問題</strong>
-          <p class="calendar-empty-desc">在 ${this.selectedDateKey} 的 ${rawQuestions.length} 則提問中，未找到包含「${escapeHtml(this.filterKeyword)}」的紀錄。</p>
+          <strong class="calendar-empty-title">查無符合關鍵字的對話紀錄</strong>
+          <p class="calendar-empty-desc">在所有歷史提問與對話中，未找到包含「${escapeHtml(this.filterKeyword)}」的內容。請嘗試更簡短的關鍵字。</p>
         `;
       }
       this.questionsList.appendChild(emptyDiv);
@@ -4869,10 +4885,12 @@ class QuestionCalendarController {
       `
         : '';
 
+      const dateLabel = isGlobalSearch ? `📅 ${q.dateKey} ` : '';
+
       card.innerHTML = `
         <div class="cqc-header">
           <div class="cqc-meta-wrap">
-            <span class="cqc-time">⏰ ${q.timeStr}</span>
+            <span class="cqc-time">${dateLabel}⏰ ${q.timeStr}</span>
             <span class="cqc-session-tag" title="${escapeHtml(q.sessionTitle)}">💬 ${escapeHtml(q.sessionTitle)}</span>
           </div>
           <button type="button" class="cqc-jump-btn" title="切換並前往此對話">
