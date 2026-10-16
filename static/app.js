@@ -573,7 +573,22 @@ window.addEventListener('load', () => {
 function getSessions() {
   try {
     const raw = localStorage.getItem(SESSIONS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    const defaults = [
+      { id: 'sess_1', title: '未命名', messages: [{ role: 'user', text: '新對話' }, { role: 'assistant', text: '你好！請問有什麼我可以協助的嗎？' }], updatedAt: Date.now() - 3600000 },
+      { id: 'sess_2', title: '化解惡意', messages: [{ role: 'user', text: '如何優雅化解言語惡意？' }, { role: 'assistant', text: '面對言語惡意時，保持冷靜並建立情緒邊界是第一步...' }], updatedAt: Date.now() - 7200000 },
+      { id: 'sess_3', title: '加速度函數積分', messages: [{ role: 'user', text: '加速度對時間積分的物理意義？' }, { role: 'assistant', text: '加速度函數 a(t) 對時間的一階積分即為速度函數 v(t)...' }], updatedAt: Date.now() - 14400000 },
+      { id: 'sess_4', title: '英文單字測驗', messages: [{ role: 'user', text: '進行進階學測核心單字測驗' }, { role: 'assistant', text: '準備開始單字測驗！第一題：Ubiquitous 的意思是什麼？' }], updatedAt: Date.now() - 86400000 },
+      { id: 'sess_5', title: '網頁程式設計測驗製作', messages: [{ role: 'user', text: '設計一個線上測驗系統的前端結構' }, { role: 'assistant', text: '已為您架構包含題庫渲染、作答倒數與自動計分的線上測驗組件。' }], updatedAt: Date.now() - 172800000 },
+      { id: 'sess_6', title: '未命名', messages: [{ role: 'user', text: '筆記整理' }, { role: 'assistant', text: '隨時為您整理條列筆記與關鍵心智圖。' }], updatedAt: Date.now() - 259200000 },
+      { id: 'sess_7', title: '物理觀念統整表', messages: [{ role: 'user', text: '整理古典力學與電磁學核心公式' }, { role: 'assistant', text: '已彙整牛頓三大運動定律與馬克士威方程組核心觀念對照表。' }], updatedAt: Date.now() - 345600000 },
+      { id: 'sess_8', title: '單字統整測驗', messages: [{ role: 'user', text: '統整易混淆高頻片語與單字' }, { role: 'assistant', text: '已列出 20 組最容易混淆的近義字對比與例句說明。' }], updatedAt: Date.now() - 432000000 }
+    ];
+    saveSessions(defaults);
+    return defaults;
   } catch (e) {
     return [];
   }
@@ -763,28 +778,13 @@ function renderHistoryList(customQuery) {
     const msgCountLabel = msgCount > 0 ? `${msgCount} 則對話` : '新對話';
 
     item.innerHTML = `
-      <div class="history-item-top">
-        <div class="history-item-title-wrap">
-          <svg class="history-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <span class="history-item-title" title="${escapeHtml(session.title)}">${displayTitle}</span>
-        </div>
+      <div class="history-item-row">
+        <span class="history-item-title" title="${escapeHtml(session.title)}">${displayTitle}</span>
         <button class="history-item-del" type="button" title="刪除此紀錄" aria-label="刪除此紀錄">
           ${TRASH_ICON_SVG}
         </button>
       </div>
       ${snippetHtml}
-      <div class="history-item-bottom">
-        <span class="history-item-time">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          ${formatHistoryTime(session.updatedAt)}
-        </span>
-        <span class="history-item-badge">${msgCountLabel}</span>
-      </div>
     `;
 
     item.addEventListener('click', (e) => {
@@ -2467,6 +2467,47 @@ if (sidebarCollapseBtn && mainSidebar) {
 if (mediaLibraryBtn) {
   mediaLibraryBtn.addEventListener('click', () => {
     alert('媒體庫已為您就緒！您可以存放常用提示詞、對話靈感與附件檔案。');
+  });
+}
+
+const sidebarScheduledBtn = document.querySelector('#sidebarScheduledBtn');
+const sidebarStudentBtn = document.querySelector('#sidebarStudentBtn');
+const sidebarMoreBtn = document.querySelector('#sidebarMoreBtn');
+const sidebarMoreDropdown = document.querySelector('#sidebarMoreDropdown');
+const sidebarSearchBtn = document.querySelector('#sidebarSearchBtn');
+
+if (sidebarScheduledBtn) {
+  sidebarScheduledBtn.addEventListener('click', () => {
+    alert('已排定任務管理（定時提醒與主動排程）：目前暫無排定的背景任務。\n您可以在對話中指示系統：「請在明天早上9點提醒我複習英文單字」，系統將自動為您排定！');
+  });
+}
+
+if (sidebarStudentBtn) {
+  sidebarStudentBtn.addEventListener('click', () => {
+    const inputEl = document.querySelector('#input');
+    if (inputEl) {
+      inputEl.value = '請開啟學生導師模式，以條理分明、循序漸進的方式為我講解學習重點與考題觀念！';
+      inputEl.focus();
+    }
+  });
+}
+
+if (sidebarMoreBtn && sidebarMoreDropdown) {
+  sidebarMoreBtn.addEventListener('click', () => {
+    const isExpanded = sidebarMoreDropdown.style.display !== 'none';
+    sidebarMoreDropdown.style.display = isExpanded ? 'none' : 'flex';
+    sidebarMoreBtn.setAttribute('aria-expanded', !isExpanded);
+  });
+}
+
+if (sidebarSearchBtn) {
+  sidebarSearchBtn.addEventListener('click', () => {
+    if (window.questionCalendarController) {
+      window.questionCalendarController.openModal();
+    } else {
+      const qBtn = document.querySelector('#quickCalendarHeaderBtn');
+      if (qBtn) qBtn.click();
+    }
   });
 }
 

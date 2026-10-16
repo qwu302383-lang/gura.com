@@ -88,7 +88,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px 10px 8px;
+  padding: 10px 10px 10px 14px;
 }
 
 .sidebar-brand {
@@ -100,41 +100,48 @@ button { cursor: pointer; }
   user-select: none;
 }
 
-.gura-shark-icon {
-  width: 32px;
-  height: 32px;
+.gemini-sparkle-icon {
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(2, 132, 199, 0.2));
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
 
-.sidebar-brand:hover .gura-shark-icon {
-  transform: scale(1.08) rotate(-4deg);
+.sidebar-brand:hover .gemini-sparkle-icon {
+  transform: rotate(20deg) scale(1.08);
 }
 
-.gura-brand-title {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 22px;
+.sidebar-brand-title {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
-  letter-spacing: -0.02em;
+  color: #1f1f1f;
+  letter-spacing: -0.01em;
 }
 
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sidebar-header-icon-btn,
 .sidebar-collapse-btn {
   background: transparent;
   border: 0;
-  color: #64748b;
+  color: #5f6368;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
   display: grid;
   place-items: center;
   transition: all 0.15s ease;
 }
 
+.sidebar-header-icon-btn:hover,
 .sidebar-collapse-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #f0f4f9;
+  color: #1f1f1f;
 }
 
 /* 主功能導航列 (膠囊樣式) */
@@ -412,38 +419,31 @@ button { cursor: pointer; }
   background: #94a3b8;
 }
 
-/* 歷史卡片本體：加大格子、圓角、陰影、卡片化 */
+/* 歷史對話列表項目 (比照截圖極簡風格：純文字、圓角 Hover、超長省略號) */
 .history-item {
   display: flex;
   flex-direction: column;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  transition: background-color 0.15s ease;
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .history-item:hover {
-  background: #f8fafc;
-  border-color: #38bdf8;
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.08);
+  background: #f0f4f9;
 }
 
 .history-item.active {
-  background: #f0f9ff;
-  border-color: #0284c7;
-  border-left: 4px solid #0284c7;
-  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.14);
+  background: #e8f0fe;
 }
 
-.history-item-top {
+.history-item-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -451,32 +451,10 @@ button { cursor: pointer; }
   gap: 8px;
 }
 
-.history-item-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.history-item-icon {
-  flex-shrink: 0;
-  color: #64748b;
-  transition: color 0.15s ease;
-}
-
-.history-item:hover .history-item-icon {
-  color: #0284c7;
-}
-
-.history-item.active .history-item-icon {
-  color: #0284c7;
-}
-
 .history-item-title {
   font-size: 13.5px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 400;
+  color: #1f1f1f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -485,16 +463,17 @@ button { cursor: pointer; }
 }
 
 .history-item.active .history-item-title {
-  color: #0284c7;
+  color: #1a73e8;
+  font-weight: 500;
 }
 
-/* 歷史卡片刪除鈕 */
+/* 歷史項目刪除鈕 (Hover 時淡入) */
 .history-item-del {
   background: transparent;
   border: 0;
-  padding: 4px 6px;
-  color: #94a3b8;
-  border-radius: 6px;
+  padding: 2px 4px;
+  color: #70757a;
+  border-radius: 4px;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
@@ -509,51 +488,8 @@ button { cursor: pointer; }
 }
 
 .history-item-del:hover {
-  color: #ef4444;
-  background: #fee2e2;
-}
-
-/* 歷史卡片底列：時間 + 則數徽章 */
-.history-item-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 7px;
-  padding-top: 6px;
-  border-top: 1px dashed #f1f5f9;
-  width: 100%;
-}
-
-.history-item.active .history-item-bottom {
-  border-top-color: #e0f2fe;
-}
-
-.history-item-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: #64748b;
-}
-
-.history-item-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #f1f5f9;
-  color: #475569;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 10.5px;
-  font-weight: 500;
-  transition: all 0.15s ease;
-}
-
-.history-item.active .history-item-badge {
-  background: #e0f2fe;
-  color: #0284c7;
-  font-weight: 600;
+  color: #d93025;
+  background: #fce8e6;
 }
 
 .history-empty { padding: 24px 0; text-align: center; color: var(--muted); }
@@ -561,16 +497,14 @@ button { cursor: pointer; }
 .history-empty p { margin: 0 0 2px; font-size: 12px; font-weight: 500; color: var(--ink); }
 .history-empty span { font-size: 11px; color: var(--muted); }
 
-/* 底部使用者帳戶與設定 */
+/* 底部使用者列 (頭像 + 吳奕璿 / Pro + 設定齒輪) */
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
+  padding: 10px 8px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 4px;
-  padding-right: 4px;
+  user-select: none;
 }
 
 .sidebar-user-wrap {
@@ -578,24 +512,23 @@ button { cursor: pointer; }
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 9999px;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease;
   flex: 1;
   min-width: 0;
 }
 
 .sidebar-user-wrap:hover {
-  background-color: #f1f5f9;
+  background-color: #f0f4f9;
 }
 
 .sidebar-user-avatar-wrap {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
-  background: #f0f7ff;
-  border: 1px solid #e1ebf4;
+  background: #f0f4f9;
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -605,27 +538,39 @@ button { cursor: pointer; }
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
-.sidebar-user-avatar-fallback {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0284c7;
+.sidebar-user-text-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
 }
 
 .sidebar-user-name {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.sidebar-user-tier {
+  font-size: 12px;
+  font-weight: 400;
+  color: #5f6368;
+  line-height: 1.25;
 }
 
 .sidebar-settings-btn {
   background: transparent;
   border: 0;
-  color: #64748b;
+  color: #5f6368;
   padding: 8px;
   border-radius: 50%;
   cursor: pointer;
@@ -636,8 +581,8 @@ button { cursor: pointer; }
 }
 
 .sidebar-settings-btn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #f0f4f9;
+  color: #1f1f1f;
 }
 
 /* 側邊欄折疊模式 */

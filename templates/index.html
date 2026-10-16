@@ -21,7 +21,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=22" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=23" />
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
@@ -96,39 +96,37 @@
 
       <main class="workspace">
         <aside class="sidebar" id="mainSidebar">
-          <!-- 頂部品牌列：Q版可愛鯊魚 + Gura + 收合按鈕 -->
+          <!-- 頂部品牌列：Gemini 標誌 + 搜尋 + 收合按鈕 -->
           <div class="sidebar-header">
             <div class="sidebar-brand">
-              <svg class="gura-shark-icon" viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- 背鰭 -->
-                <path d="M19 4 C18 10, 14 13, 11 15 L24 15 C22 11, 20 6, 19 4 Z" fill="#0284c7"/>
-                <!-- 鯊魚身體 (圓滾滾Q版) -->
-                <ellipse cx="20" cy="22" rx="14" ry="12" fill="#0284c7"/>
-                <!-- 尾鰭 -->
-                <path d="M7 22 C3 16, 2 13, 1 11 C4 15, 6 18, 7 21 C6 24, 4 27, 1 31 C2 29, 3 26, 7 22 Z" fill="#0284c7"/>
-                <!-- 肚肚 (純白圓滾滾) -->
-                <path d="M15 22 C15 28, 19 32, 25 32 C31 32, 33 27, 33 22 C33 21, 26 19, 20 20 C16 20, 15 21, 15 22 Z" fill="#ffffff"/>
-                <!-- 可愛側鰭 -->
-                <path d="M17 26 C15 30, 12 32, 10 32 C12 29, 14 27, 17 26 Z" fill="#0369a1"/>
-                <!-- 腮紅 -->
-                <ellipse cx="24" cy="24" rx="2.5" ry="1.5" fill="#fda4af" opacity="0.85"/>
-                <!-- 萌萌大眼睛 -->
-                <circle cx="27" cy="18" r="2.8" fill="#0d2238"/>
-                <circle cx="26.2" cy="17" r="1.1" fill="#ffffff"/>
-                <circle cx="28.2" cy="19.2" r="0.6" fill="#ffffff"/>
-                <!-- 開心微笑小嘴 + 標誌性小鯊魚牙齒 -->
-                <path d="M29 23 Q32 25 34 23" stroke="#0d2238" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-                <polygon points="31,23.5 32,25.5 33,23.5" fill="#ffffff"/>
+              <svg class="gemini-sparkle-icon" viewBox="0 0 24 24" width="22" height="22" fill="none">
+                <defs>
+                  <linearGradient id="geminiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4285F4" />
+                    <stop offset="35%" stop-color="#9B72CB" />
+                    <stop offset="70%" stop-color="#D96570" />
+                    <stop offset="100%" stop-color="#137333" />
+                  </linearGradient>
+                </defs>
+                <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#geminiSparkleGrad)" />
               </svg>
-              <span class="gura-brand-title">Gura</span>
+              <span class="sidebar-brand-title">Gemini</span>
             </div>
-            <button id="sidebarCollapseBtn" class="sidebar-collapse-btn" type="button" title="收合側邊欄" aria-label="收合側邊欄">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="4"></rect>
-                <line x1="9" y1="3" x2="9" y2="21"></line>
-              </svg>
-            </button>
-            <button id="mobileSidebarCloseBtn" class="mobile-sidebar-close-btn" type="button" title="關閉選單" aria-label="關閉選單">✕</button>
+            <div class="sidebar-header-actions">
+              <button id="sidebarSearchBtn" class="sidebar-header-icon-btn" type="button" title="搜尋對話" aria-label="搜尋對話">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </button>
+              <button id="sidebarCollapseBtn" class="sidebar-collapse-btn" type="button" title="收合側邊欄" aria-label="收合側邊欄">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+              </button>
+              <button id="mobileSidebarCloseBtn" class="mobile-sidebar-close-btn" type="button" title="關閉選單" aria-label="關閉選單">✕</button>
+            </div>
           </div>
 
           <!-- 主功能導航列 -->
@@ -141,7 +139,6 @@
               <span>新對話</span>
             </button>
 
-            <!-- 上方整合搜尋對話 (保留完整對話與內文檢索) -->
             <button id="mediaLibraryBtn" class="sidebar-item-btn" type="button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -152,38 +149,114 @@
               <span>媒體庫</span>
             </button>
 
-            <button id="sidebarCollabBtn" class="sidebar-item-btn" type="button" title="連機協作室 (多人共用專案討論)">
+            <!-- 已排定 (🕒 時鐘) -->
+            <button id="sidebarScheduledBtn" class="sidebar-item-btn" type="button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>連機協作</span>
-              <span id="sidebarCollabCountBadge" class="sidebar-badge collab-count-badge" style="display: none;">0</span>
+              <span>已排定</span>
             </button>
 
-            <a id="sidebarWebBuilderBtn" class="sidebar-item-btn" href="/studio" target="_blank" rel="noopener noreferrer" title="網頁製作系統 (獨立全螢幕專業工坊頁面，承擔大型工程負載)">
+            <!-- 學生 (🎓 學士帽) -->
+            <button id="sidebarStudentBtn" class="sidebar-item-btn" type="button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
               </svg>
-              <span>網頁製作系統</span>
-              <span class="sidebar-badge new-badge" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: white;">PAGE</span>
-            </a>
+              <span>學生</span>
+            </button>
+
+            <!-- 顯示更多 (⋯) -->
+            <button id="sidebarMoreBtn" class="sidebar-item-btn" type="button" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+                <circle cx="5" cy="12" r="1.5"></circle>
+              </svg>
+              <span>顯示更多</span>
+            </button>
+
+            <!-- 更多功能的折疊抽屜 (包含連機協作與網頁製作系統) -->
+            <div id="sidebarMoreDropdown" class="sidebar-more-dropdown" style="display: none;">
+              <button id="sidebarCollabBtn" class="sidebar-item-btn sub-item" type="button" title="連機協作室 (多人共用專案討論)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>連機協作</span>
+                <span id="sidebarCollabCountBadge" class="sidebar-badge collab-count-badge" style="display: none;">0</span>
+              </button>
+
+              <a id="sidebarWebBuilderBtn" class="sidebar-item-btn sub-item" href="/studio" target="_blank" rel="noopener noreferrer" title="網頁製作系統 (獨立全螢幕專業工坊頁面)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span>網頁製作系統</span>
+                <span class="sidebar-badge new-badge" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: white; font-size: 10px; padding: 1px 6px;">PAGE</span>
+              </a>
+            </div>
           </div>
 
-          <!-- 近期對話分類 (全面展開，提供最大化歷史紀錄展示空間) -->
+          <!-- 筆記本分類 -->
+          <div class="sidebar-section notebook-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-section-title">筆記本</span>
+            </div>
+            <div class="sidebar-section-list">
+              <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="sidebar-item-btn notebook-item" title="前往 Google NotebookLM 建立新筆記本">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>新增筆記本</span>
+              </a>
+              <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="sidebar-item-btn notebook-item" title="開啟 Untitled notebook">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Untitled notebook</span>
+              </a>
+              <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="sidebar-item-btn notebook-item" title="開啟 Untitled notebook">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Untitled notebook</span>
+              </a>
+              <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="sidebar-item-btn notebook-item" title="The AIGC and Embodied AI Industry">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span class="ellipsis-text">The AIGC and Embodied AI Indust...</span>
+              </a>
+              <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="sidebar-item-btn notebook-item" title="檢視所有筆記本">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="19" cy="12" r="1.5"></circle>
+                  <circle cx="5" cy="12" r="1.5"></circle>
+                </svg>
+                <span>所有筆記本</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 全部 (歷史紀錄清單) -->
           <div class="sidebar-section history-section">
             <div class="sidebar-section-header">
-              <span class="sidebar-section-title">近期對話</span>
+              <span class="sidebar-section-title">全部</span>
               <div class="sidebar-section-actions">
-                <button id="quickCalendarHeaderBtn" class="calendar-quick-link" type="button" title="開啟提問日曆與對話搜尋">
-                  <span>📅 日曆</span>
-                  <span id="sidebarCalendarCountBadge" class="sidebar-badge calendar-count-badge" style="display: none;">0</span>
+                <button id="quickCalendarHeaderBtn" class="sidebar-filter-btn" type="button" title="開啟日曆篩選與搜尋" aria-label="篩選與搜尋">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
                 </button>
-                <button id="clearHistoryButton" class="clear-history-link" type="button" title="清空所有歷史紀錄">清空</button>
               </div>
             </div>
 
@@ -192,14 +265,16 @@
             </div>
           </div>
 
-          <!-- 底部使用者列 (比照參考圖) -->
+          <!-- 底部使用者列 (比照截圖：頭像 + 姓名 吳奕璿 / Pro + 設定齒輪) -->
           <div class="sidebar-footer">
             <div class="sidebar-user-wrap" id="sidebarUserProfile" role="button" tabindex="0" title="點擊切換帳戶">
               <div class="sidebar-user-avatar-wrap">
-                <img id="sidebarUserAvatarImg" class="sidebar-user-avatar-img" src="/static/google_avatar.png" alt="頭像" />
-                <span id="sidebarUserAvatarFallback" class="sidebar-user-avatar-fallback" style="display: none;">吳</span>
+                <img id="sidebarUserAvatarImg" class="sidebar-user-avatar-img" src="/static/user_cat_avatar.png" alt="頭像" />
               </div>
-              <span id="sidebarUserName" class="sidebar-user-name">吳奕璿</span>
+              <div class="sidebar-user-text-col">
+                <span id="sidebarUserName" class="sidebar-user-name">吳奕璿</span>
+                <span class="sidebar-user-tier">Pro</span>
+              </div>
             </div>
             <button id="sidebarSettingsBtn" class="sidebar-settings-btn" type="button" title="設定與帳號" aria-label="設定">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1412,6 +1487,6 @@
       </div>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}?v=22"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=23"></script>
   </body>
 </html>
