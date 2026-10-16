@@ -391,6 +391,25 @@ button { cursor: pointer; }
   gap: 8px;
   padding: 4px 6px 16px 2px;
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* 歷史卡片本體：加大格子、圓角、陰影、卡片化 */

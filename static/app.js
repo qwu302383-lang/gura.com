@@ -2392,9 +2392,6 @@ const sidebarBackdrop = document.querySelector('#sidebarBackdrop');
 const mobileSidebarCloseBtn = document.querySelector('#mobileSidebarCloseBtn');
 const searchChatToggleBtn = document.querySelector('#searchChatToggleBtn');
 const mediaLibraryBtn = document.querySelector('#mediaLibraryBtn');
-const addNotebookBtn = document.querySelector('#addNotebookBtn');
-const notebooksList = document.querySelector('#notebooksList');
-const allNotebooksBtn = document.querySelector('#allNotebooksBtn');
 const sidebarUserProfile = document.querySelector('#sidebarUserProfile');
 const sidebarSettingsBtn = document.querySelector('#sidebarSettingsBtn');
 
