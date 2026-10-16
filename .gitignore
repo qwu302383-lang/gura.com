@@ -11,6 +11,7 @@ tunnel_output.log
 test_*.py
 scratch/
 data/collab_rooms/*.json
+data/generated_sites/*.html
 gura_cloud_deploy.zip
 *.mp4
 *.trk

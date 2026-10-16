@@ -1747,13 +1747,17 @@ function attachWebLaunchCard(messageEl, rawText, providedSiteUrl, providedTitle)
     });
   }
 
-  // 工坊編輯
+  // 工坊編輯：進入獨立專屬全螢幕 Studio 頁面（承擔大型工程負載）
   if (studioBtn) {
     studioBtn.addEventListener('click', () => {
-      if (typeof webBuilderController !== 'undefined' && webBuilderController) {
-        webBuilderController.loadExistingCode(htmlContent, title);
-        webBuilderController.openModal();
+      try {
+        localStorage.setItem('gura_studio_import_code', htmlContent);
+        localStorage.setItem('gura_studio_import_title', title || '');
+        if (activeUrl) localStorage.setItem('gura_studio_import_url', activeUrl);
+      } catch (e) {
+        console.warn('localStorage error', e);
       }
+      window.open('/studio', '_blank');
     });
   }
 
@@ -5098,10 +5102,15 @@ class WebBuilderController {
   }
 
   bindEvents() {
-    // 側邊欄開啟 Studio Modal
+    // 側邊欄開啟獨立全螢幕 Studio 頁面（承擔高工程負載）
     if (this.sidebarBtn) {
       this.sidebarBtn.addEventListener('click', () => {
-        this.openModal();
+        if (this.currentHtml) {
+          try {
+            localStorage.setItem('gura_studio_import_code', this.currentHtml);
+            localStorage.setItem('gura_studio_import_title', this.currentTitle || '');
+          } catch (err) {}
+        }
       });
     }
 
@@ -5242,7 +5251,18 @@ class WebBuilderController {
     }
   }
 
-  openModal() {
+  openModal(forceModal = false) {
+    if (!forceModal) {
+      // 升級：全面導向獨立全螢幕 Studio 頁面 (/studio)，承擔大型工程負載
+      try {
+        if (this.currentHtml) {
+          localStorage.setItem('gura_studio_import_code', this.currentHtml);
+          localStorage.setItem('gura_studio_import_title', this.currentTitle || '');
+        }
+      } catch (err) {}
+      window.open('/studio', '_blank');
+      return;
+    }
     if (this.modal) {
       this.modal.style.display = 'flex';
       if (typeof closeMobileSidebar === 'function') closeMobileSidebar();

@@ -11,6 +11,12 @@ main_bp = Blueprint("main", __name__)
 def home():
     return render_template("index.html", google_client_id=GOOGLE_CLIENT_ID)
 
+@main_bp.get("/studio")
+@main_bp.get("/builder")
+def studio():
+    """獨立全螢幕網頁製作工坊頁面 (Web Creator Studio Page)"""
+    return render_template("studio.html")
+
 @main_bp.get("/sites/<site_id>")
 def view_site(site_id):
     """直接以獨立專屬網址開啟使用者生成的完整簡易網頁"""
@@ -55,3 +61,26 @@ def save_site():
         "site_url": f"/sites/{site_id}",
         "title": title
     })
+
+@main_bp.get("/api/sites/<site_id>")
+def get_site(site_id):
+    """獲取指定站點之 HTML 內容與標題供 Studio 工坊載入"""
+    safe_id = re.sub(r'[^a-zA-Z0-9_-]', '', site_id)
+    if not safe_id:
+        return jsonify({"error": "無效的 site_id"}), 400
+    file_path = os.path.join(SITES_DIR, f"{safe_id}.html")
+    if not os.path.exists(file_path):
+        return jsonify({"error": "找不到此站點"}), 404
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            html = f.read()
+        title_m = re.search(r'<title[^>]*>(.*?)</title>', html, re.I)
+        title = title_m.group(1).strip() if title_m and title_m.group(1).strip() else "簡易自訂網頁"
+        return jsonify({
+            "site_id": safe_id,
+            "site_url": f"/sites/{safe_id}",
+            "title": title,
+            "html": html
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
