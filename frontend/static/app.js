@@ -602,7 +602,7 @@ function formatHistoryTime(timestamp) {
   return `${month}/${day}`;
 }
 
-function appendMessageToCurrentSession(role, text) {
+function appendMessageToCurrentSession(role, text, siteUrl, siteTitle) {
   const sessions = getSessions();
   let session = sessions.find((s) => s.id === currentSessionId);
 
@@ -621,7 +621,11 @@ function appendMessageToCurrentSession(role, text) {
     if (sessionLabel) sessionLabel.textContent = 'CONVERSATION';
   }
 
-  session.messages.push({ role, text, timestamp: Date.now() });
+  const msgObj = { role, text, timestamp: Date.now() };
+  if (siteUrl) msgObj.siteUrl = siteUrl;
+  if (siteTitle) msgObj.siteTitle = siteTitle;
+
+  session.messages.push(msgObj);
   session.updatedAt = Date.now();
   saveSessions(sessions);
   renderHistoryList();
@@ -630,7 +634,7 @@ function appendMessageToCurrentSession(role, text) {
   }
 }
 
-function updateSessionMessage(oldPrompt, newPrompt, newResponse) {
+function updateSessionMessage(oldPrompt, newPrompt, newResponse, siteUrl, siteTitle) {
   if (!currentSessionId) return;
   const sessions = getSessions();
   const session = sessions.find((s) => s.id === currentSessionId);
@@ -641,6 +645,8 @@ function updateSessionMessage(oldPrompt, newPrompt, newResponse) {
     session.messages[msgIndex].text = newPrompt;
     if (session.messages[msgIndex + 1] && session.messages[msgIndex + 1].role === 'assistant') {
       session.messages[msgIndex + 1].text = newResponse;
+      if (siteUrl) session.messages[msgIndex + 1].siteUrl = siteUrl;
+      if (siteTitle) session.messages[msgIndex + 1].siteTitle = siteTitle;
     }
   }
 
@@ -753,15 +759,32 @@ function renderHistoryList(customQuery) {
       snippetHtml = `<div class="history-item-snippet" title="${escapeHtml(matchedSnippet)}">💬 ${highlightSearchMatch(matchedSnippet, rawQuery)}</div>`;
     }
 
+    const msgCount = Array.isArray(session.messages) ? session.messages.length : 0;
+    const msgCountLabel = msgCount > 0 ? `${msgCount} 則對話` : '新對話';
+
     item.innerHTML = `
-      <div class="history-item-content">
-        <div class="history-item-title" title="${escapeHtml(session.title)}">${displayTitle}</div>
-        ${snippetHtml}
-        <div class="history-item-time">${formatHistoryTime(session.updatedAt)}</div>
+      <div class="history-item-top">
+        <div class="history-item-title-wrap">
+          <svg class="history-item-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="history-item-title" title="${escapeHtml(session.title)}">${displayTitle}</span>
+        </div>
+        <button class="history-item-del" type="button" title="刪除此紀錄" aria-label="刪除此紀錄">
+          ${TRASH_ICON_SVG}
+        </button>
       </div>
-      <button class="history-item-del" type="button" title="刪除此紀錄" aria-label="刪除此紀錄">
-        ${TRASH_ICON_SVG}
-      </button>
+      ${snippetHtml}
+      <div class="history-item-bottom">
+        <span class="history-item-time">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          ${formatHistoryTime(session.updatedAt)}
+        </span>
+        <span class="history-item-badge">${msgCountLabel}</span>
+      </div>
     `;
 
     item.addEventListener('click', (e) => {
@@ -813,7 +836,7 @@ function loadSession(id) {
 
   let lastUserMsgEl = null;
   session.messages.forEach((msg) => {
-    const el = addMessage(msg.role, msg.text);
+    const el = addMessage(msg.role, msg.text, msg.siteUrl, msg.siteTitle);
     if (msg.role === 'user') {
       lastUserMsgEl = el;
     } else if (msg.role === 'assistant' && lastUserMsgEl) {
@@ -1579,120 +1602,152 @@ function downloadHtmlFile(content, filename) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-function attachWebPreviewIfPresent(messageEl, rawText) {
+function attachWebLaunchCard(messageEl, rawText, providedSiteUrl, providedTitle) {
   const htmlContent = extractHtmlWebpage(rawText);
   if (!htmlContent) return;
 
   // 避免重複附加
-  if (messageEl.querySelector('.web-preview-container')) return;
+  if (messageEl.querySelector('.web-launch-card')) return;
+  const oldIframe = messageEl.querySelector('.web-preview-container');
+  if (oldIframe) oldIframe.remove();
 
-  const title = extractTitleFromHtml(htmlContent);
-  const previewContainer = document.createElement('div');
-  previewContainer.className = 'web-preview-container';
+  const title = providedTitle || extractTitleFromHtml(htmlContent);
+  const card = document.createElement('div');
+  card.className = 'web-launch-card';
 
-  previewContainer.innerHTML = `
-    <div class="web-preview-header">
-      <div class="web-preview-title">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-          <line x1="8" y1="21" x2="16" y2="21"></line>
-          <line x1="12" y1="17" x2="12" y2="21"></line>
+  card.innerHTML = `
+    <div class="web-launch-header">
+      <div class="web-launch-badge-row">
+        <span class="web-launch-badge">
+          <span class="web-launch-dot"></span>
+          網頁已生成上線
+        </span>
+        <span class="web-launch-type">獨立全螢幕網頁</span>
+      </div>
+      <h3 class="web-launch-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        <span>網頁即時預覽：${escapeHtml(title)}</span>
-      </div>
-      <div class="web-preview-actions">
-        <div class="device-toggle-group">
-          <button type="button" class="device-btn active" data-device="desktop" title="桌面寬度視角 (100%)">💻 桌面</button>
-          <button type="button" class="device-btn" data-device="tablet" title="平板視角 (768px)">📟 平板</button>
-          <button type="button" class="device-btn" data-device="mobile" title="手機視角 (375px)">📱 手機</button>
-        </div>
-        <div class="view-toggle-group">
-          <button type="button" class="view-toggle-btn active" data-view="preview" title="即時互動預覽">👁️ 預覽</button>
-          <button type="button" class="view-toggle-btn" data-view="code" title="檢視 HTML 原始碼">💻 代碼</button>
-        </div>
-        <button type="button" class="preview-action-btn open-fullscreen-btn" title="在新分頁開啟全螢幕網頁">🚀 全螢幕</button>
-        <button type="button" class="preview-action-btn download-html-btn" title="下載 index.html 檔案">💾 下載</button>
-        <button type="button" class="preview-action-btn copy-code-btn" title="複製 HTML 程式碼">📋 複製</button>
-        <button type="button" class="preview-action-btn primary open-studio-btn" title="在網頁工坊中進一步修改與預覽">🛠️ 工坊編輯</button>
-      </div>
+        <span class="web-launch-title-text">${escapeHtml(title)}</span>
+      </h3>
     </div>
-    <div class="web-preview-viewport desktop">
-      <iframe class="web-preview-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
-      <div class="web-preview-code" style="display: none;">
-        <pre><code>${escapeHtml(htmlContent)}</code></pre>
+
+    <div class="web-launch-body">
+      <p class="web-launch-hint">點擊專屬獨立連結在新分頁進入網頁：</p>
+      
+      <div class="web-launch-link-box">
+        <span class="web-launch-url-prefix">URL</span>
+        <a class="web-launch-url-link" href="#" target="_blank" rel="noopener noreferrer" title="在新分頁開啟全螢幕獨立網頁">
+          <span class="web-launch-url-val">載入網址中...</span>
+          <svg class="web-launch-external-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+      </div>
+
+      <div class="web-launch-actions">
+        <a class="web-launch-btn primary-launch-btn" href="#" target="_blank" rel="noopener noreferrer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>🚀 點此進入網頁 (新分頁開啟)</span>
+        </a>
+        <button type="button" class="web-launch-btn copy-link-btn" title="複製網址連結">
+          📋 複製連結
+        </button>
+        <button type="button" class="web-launch-btn download-btn" title="下載 index.html 檔案">
+          💾 下載網頁
+        </button>
+        <button type="button" class="web-launch-btn studio-btn" title="在網頁工坊中進一步修改與預覽">
+          🛠️ 工坊編輯
+        </button>
+        <button type="button" class="web-launch-btn toggle-code-btn" title="展開或收合 HTML 原始碼">
+          💻 檢視代碼
+        </button>
+      </div>
+
+      <div class="web-launch-code-drawer" style="display: none;">
+        <div class="web-launch-code-header">
+          <span>HTML 原始碼</span>
+          <button type="button" class="copy-source-btn">複製代碼</button>
+        </div>
+        <pre class="web-launch-code-pre"><code>${escapeHtml(htmlContent)}</code></pre>
       </div>
     </div>
   `;
 
-  const iframe = previewContainer.querySelector('.web-preview-iframe');
-  const codeView = previewContainer.querySelector('.web-preview-code');
-  const viewport = previewContainer.querySelector('.web-preview-viewport');
+  const urlLink = card.querySelector('.web-launch-url-link');
+  const urlVal = card.querySelector('.web-launch-url-val');
+  const primaryLaunchBtn = card.querySelector('.primary-launch-btn');
+  const copyLinkBtn = card.querySelector('.copy-link-btn');
+  const downloadBtn = card.querySelector('.download-btn');
+  const studioBtn = card.querySelector('.studio-btn');
+  const toggleCodeBtn = card.querySelector('.toggle-code-btn');
+  const codeDrawer = card.querySelector('.web-launch-code-drawer');
+  const copySourceBtn = card.querySelector('.copy-source-btn');
 
-  // 載入 HTML 至 iframe
-  try {
-    iframe.srcdoc = htmlContent;
-  } catch (e) {
-    console.error('iframe srcdoc error:', e);
+  let activeUrl = '';
+
+  function setReadyUrl(fullUrl) {
+    activeUrl = fullUrl;
+    urlLink.href = fullUrl;
+    urlVal.textContent = fullUrl;
+    urlVal.title = fullUrl;
+    primaryLaunchBtn.href = fullUrl;
   }
 
-  // 裝置視圖切換
-  previewContainer.querySelectorAll('.device-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      previewContainer.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const device = btn.getAttribute('data-device');
-      viewport.className = `web-preview-viewport ${device}`;
-    });
-  });
+  if (providedSiteUrl) {
+    const fullUrl = providedSiteUrl.startsWith('http') ? providedSiteUrl : (window.location.origin + providedSiteUrl);
+    setReadyUrl(fullUrl);
+  } else {
+    // 預設以本地 Blob 立即支援點擊開啟
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    setReadyUrl(blobUrl);
 
-  // 預覽 / 代碼 切換
-  previewContainer.querySelectorAll('.view-toggle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      previewContainer.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const view = btn.getAttribute('data-view');
-      if (view === 'preview') {
-        iframe.style.display = 'block';
-        codeView.style.display = 'none';
-      } else {
-        iframe.style.display = 'none';
-        codeView.style.display = 'block';
+    // 發送至後端持久化，取得永久獨立網址 /sites/<site_id>
+    fetch('/api/sites/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: htmlContent, title })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.site_url) {
+        const permUrl = window.location.origin + data.site_url;
+        setReadyUrl(permUrl);
       }
-    });
-  });
-
-  // 全螢幕 / 新分頁開啟
-  const fullscreenBtn = previewContainer.querySelector('.open-fullscreen-btn');
-  if (fullscreenBtn) {
-    fullscreenBtn.addEventListener('click', () => {
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
+    })
+    .catch(err => {
+      console.warn('儲存站點至伺服器失敗，保留本地 Blob 訪問：', err);
     });
   }
 
-  // 下載 HTML
-  const downloadBtn = previewContainer.querySelector('.download-html-btn');
+  // 複製連結
+  if (copyLinkBtn) {
+    copyLinkBtn.addEventListener('click', () => {
+      const targetUrl = activeUrl || urlLink.href;
+      if (!targetUrl || targetUrl === '#') return;
+      navigator.clipboard.writeText(targetUrl).then(() => {
+        const orig = copyLinkBtn.textContent;
+        copyLinkBtn.textContent = '✅ 連結已複製！';
+        setTimeout(() => copyLinkBtn.textContent = orig, 1800);
+      });
+    });
+  }
+
+  // 下載網頁
   if (downloadBtn) {
     downloadBtn.addEventListener('click', () => {
       downloadHtmlFile(htmlContent, `${title.replace(/[\/\\:*?"<>|]/g, '_') || 'index'}.html`);
     });
   }
 
-  // 複製代碼
-  const copyBtn = previewContainer.querySelector('.copy-code-btn');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(htmlContent).then(() => {
-        const orig = copyBtn.textContent;
-        copyBtn.textContent = '✅ 已複製！';
-        setTimeout(() => copyBtn.textContent = orig, 1800);
-      });
-    });
-  }
-
-  // 在工坊中編輯
-  const studioBtn = previewContainer.querySelector('.open-studio-btn');
+  // 工坊編輯
   if (studioBtn) {
     studioBtn.addEventListener('click', () => {
       if (typeof webBuilderController !== 'undefined' && webBuilderController) {
@@ -1702,10 +1757,35 @@ function attachWebPreviewIfPresent(messageEl, rawText) {
     });
   }
 
-  messageEl.appendChild(previewContainer);
+  // 代碼展開 / 收合切換
+  if (toggleCodeBtn && codeDrawer) {
+    toggleCodeBtn.addEventListener('click', () => {
+      const isHidden = codeDrawer.style.display === 'none';
+      codeDrawer.style.display = isHidden ? 'block' : 'none';
+      toggleCodeBtn.textContent = isHidden ? '🔼 收合代碼' : '💻 檢視代碼';
+    });
+  }
+
+  // 複製原始碼
+  if (copySourceBtn) {
+    copySourceBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(htmlContent).then(() => {
+        const orig = copySourceBtn.textContent;
+        copySourceBtn.textContent = '✅ 已複製！';
+        setTimeout(() => copySourceBtn.textContent = orig, 1800);
+      });
+    });
+  }
+
+  messageEl.appendChild(card);
 }
 
-function addMessage(role, text) {
+// 相容歷史調用別名
+function attachWebPreviewIfPresent(messageEl, rawText, providedSiteUrl, providedTitle) {
+  attachWebLaunchCard(messageEl, rawText, providedSiteUrl, providedTitle);
+}
+
+function addMessage(role, text, siteUrl, siteTitle) {
   const message = document.createElement('article');
   message.className = `message ${role}`;
 
@@ -1774,7 +1854,7 @@ function addMessage(role, text) {
   bodyEl.textContent = text;
 
   if (role === 'assistant') {
-    attachWebPreviewIfPresent(message, text);
+    attachWebLaunchCard(message, text, siteUrl, siteTitle);
   }
 
   // 複製按鈕
@@ -1858,8 +1938,10 @@ function addMessage(role, text) {
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || '發生未知錯誤');
           respBody.textContent = data.response;
-          attachWebPreviewIfPresent(message.pairedResponse, data.response);
-          updateSessionMessage(oldPrompt, newPrompt, data.response);
+          const oldCard = message.pairedResponse.querySelector('.web-launch-card, .web-preview-container');
+          if (oldCard) oldCard.remove();
+          attachWebLaunchCard(message.pairedResponse, data.response, data.site_url, data.site_title);
+          updateSessionMessage(oldPrompt, newPrompt, data.response, data.site_url, data.site_title);
 
           if (isAutoSpeakEnabled() && voiceSynthesisController) {
             const spBtn = message.pairedResponse.querySelector('.speak-btn');
@@ -1923,9 +2005,9 @@ async function submitPrompt(prompt) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '發生未知錯誤');
-    const assistantMessage = addMessage('assistant', data.response);
+    const assistantMessage = addMessage('assistant', data.response, data.site_url, data.site_title);
     userMessage.pairedResponse = assistantMessage;
-    appendMessageToCurrentSession('assistant', data.response);
+    appendMessageToCurrentSession('assistant', data.response, data.site_url, data.site_title);
 
     // 自動朗讀功能：若使用者開啟「自動朗讀」，在收到回覆後自動發聲
     if (isAutoSpeakEnabled() && voiceSynthesisController) {
@@ -5217,8 +5299,8 @@ class WebBuilderController {
 
       // 同時在主聊天記錄中增加一筆記錄，讓歷史留存
       appendMessageToCurrentSession('user', `[網頁工坊製作] ${rawPrompt}`);
-      const asstMsg = addMessage('assistant', data.response);
-      appendMessageToCurrentSession('assistant', data.response);
+      const asstMsg = addMessage('assistant', data.response, data.site_url, data.site_title);
+      appendMessageToCurrentSession('assistant', data.response, data.site_url, data.site_title);
 
     } catch (err) {
       alert('製作失敗: ' + err.message);
@@ -5266,8 +5348,8 @@ class WebBuilderController {
 
       // 聊天記錄更新
       appendMessageToCurrentSession('user', `[網頁工坊修改] ${refineText}`);
-      const asstMsg = addMessage('assistant', data.response);
-      appendMessageToCurrentSession('assistant', data.response);
+      const asstMsg = addMessage('assistant', data.response, data.site_url, data.site_title);
+      appendMessageToCurrentSession('assistant', data.response, data.site_url, data.site_title);
 
     } catch (err) {
       alert('修改失敗: ' + err.message);

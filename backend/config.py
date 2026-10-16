@@ -8,6 +8,8 @@ PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 ROOMS_DIR = os.path.join(DATA_DIR, "collab_rooms")
 os.makedirs(ROOMS_DIR, exist_ok=True)
+SITES_DIR = os.path.join(DATA_DIR, "generated_sites")
+os.makedirs(SITES_DIR, exist_ok=True)
 
 PUBLIC_URL_FILE = os.path.join(PROJECT_ROOT, "public_url.txt")
 
