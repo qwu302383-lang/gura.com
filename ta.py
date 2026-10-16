@@ -28,8 +28,9 @@ MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
 FALLBACK_MODELS = [
     "gemini-3.6-flash",
     "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
     "gemini-flash-latest",
 ]
 
@@ -296,58 +297,65 @@ def generate_chat_reply(prompt, web_search=False, web_builder=False):
         "x-goog-api-key": api_key,
     }
 
+    cur_timeout = 160 if is_web_builder else 60
+
     payload = {
         "systemInstruction": {
             "parts": [{"text": augmented_instruction}]
         },
         "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.7 if is_web_builder else 0.8,
+            "maxOutputTokens": 8192,
+        }
     }
 
     last_error = None
 
     for model in models_to_try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        for attempt in range(2):
-            try:
-                response = requests.post(url, headers=headers, json=payload, timeout=45)
-                if response.status_code == 200:
-                    result = response.json()
-                    candidates = result.get("candidates", [])
-                    if candidates and "content" in candidates[0]:
-                        parts = candidates[0]["content"].get("parts", [])
-                        if parts and "text" in parts[0]:
-                            return {
-                                "response": parts[0]["text"],
-                                "search_sources": search_sources,
-                                "phone_action": phone_action,
-                                "is_web_builder": is_web_builder,
-                            }
-                elif response.status_code in (401, 403):
-                    raise GeminiAuthenticationError(
-                        "Gura API 金鑰無效或未授權（HTTP "
-                        f"{response.status_code}）。請撤銷外洩的舊金鑰，建立新金鑰並更新金鑰設定。"
-                    )
-                elif response.status_code == 404:
-                    last_error = f"模型 {model} 不存在或目前不可用 (HTTP 404)，切換備用模型中..."
-                    break
-                elif response.status_code in (500, 503, 504, 429):
-                    last_error = f"模型 {model} 暫時負載過高 (HTTP {response.status_code})，切換備用模型中..."
-                    break
-                else:
-                    detail = response.text[:300].replace("\n", " ")
-                    raise RuntimeError(f"Gura API 回傳 HTTP {response.status_code}: {detail}")
-            except requests.exceptions.Timeout:
-                last_error = f"模型 {model} 連線逾時，切換備用模型中..."
-                break
-            except GeminiAuthenticationError:
-                raise
-            except Exception as e:
-                err_str = _mask_key(str(e), api_key)
-                last_error = f"模型 {model} 發生錯誤: {err_str}"
-                break
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=cur_timeout)
+            if response.status_code == 200:
+                result = response.json()
+                candidates = result.get("candidates", [])
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    if parts and "text" in parts[0]:
+                        return {
+                            "response": parts[0]["text"],
+                            "search_sources": search_sources,
+                            "phone_action": phone_action,
+                            "is_web_builder": is_web_builder,
+                            "model_used": model,
+                        }
+            elif response.status_code in (401, 403):
+                raise GeminiAuthenticationError(
+                    "Gura API 金鑰無效或未授權（HTTP "
+                    f"{response.status_code}）。請撤銷外洩的舊金鑰，建立新金鑰並更新金鑰設定。"
+                )
+            elif response.status_code == 404:
+                last_error = f"模型 {model} 目前不可用 (HTTP 404)"
+                continue
+            elif response.status_code in (500, 503, 504, 429):
+                last_error = f"模型 {model} 暫時負載過高 (HTTP {response.status_code})"
+                continue
+            else:
+                detail = response.text[:200].replace("\n", " ")
+                last_error = f"模型 {model} 回傳 HTTP {response.status_code}: {detail}"
+                continue
+        except requests.exceptions.Timeout:
+            last_error = f"模型 {model} 連線逾時（生成大量代碼耗時較長）"
+            continue
+        except GeminiAuthenticationError:
+            raise
+        except Exception as e:
+            err_str = _mask_key(str(e), api_key)
+            last_error = f"模型 {model} 發生錯誤: {err_str}"
+            continue
 
-    clean_err = _mask_key(str(last_error or "未知錯誤"), api_key)
-    raise RuntimeError(f"Gura 請求失敗：{clean_err}")
+    clean_err = _mask_key(str(last_error or "所有備用模型均無法回應"), api_key)
+    raise RuntimeError(f"Gura 請求失敗：{clean_err}。請稍後重試。")
 
 
 def generate_response(prompt, web_search=False):

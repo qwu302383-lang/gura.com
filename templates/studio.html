@@ -771,7 +771,7 @@
       <div id="studioLoadingOverlay" class="studio-loading-overlay">
         <div class="studio-spinner"></div>
         <h4 id="studioLoadingText" style="color: #ffffff; font-size: 15px;">Gura AI 正在編譯您的網頁...</h4>
-        <p style="color: #94a3b8; font-size: 12px;">正在設計版面佈局、編寫互動邏輯與美化樣式</p>
+        <p id="studioLoadingSubtext" style="color: #94a3b8; font-size: 12px;">正在設計版面佈局、編寫互動邏輯與美化樣式</p>
       </div>
 
     </section>
@@ -950,7 +950,8 @@
         promptInput.value = '';
 
       } catch (err) {
-        alert('製作失敗: ' + err.message);
+        console.error('Studio 生成錯誤:', err);
+        alert('製作失敗: ' + err.message + '\n\n💡 提示：系統已準備就緒，您可以直接再次點擊「開始建構」重試。');
       } finally {
         setLoading(false);
       }
@@ -972,10 +973,39 @@
       return null;
     }
 
+    let loadingInterval = null;
     function setLoading(isLoading, text = '建構中...') {
       loadingOverlay.style.display = isLoading ? 'flex' : 'none';
       loadingText.textContent = text;
       generateBtn.disabled = isLoading;
+
+      if (loadingInterval) {
+        clearInterval(loadingInterval);
+        loadingInterval = null;
+      }
+
+      const subtextEl = document.querySelector('#studioLoadingSubtext');
+      if (isLoading) {
+        let elapsed = 0;
+        loadingInterval = setInterval(() => {
+          elapsed += 1;
+          if (subtextEl) {
+            if (elapsed < 8) {
+              subtextEl.textContent = `正在分析需求與規劃 DOM 架構... (${elapsed}s)`;
+            } else if (elapsed < 25) {
+              subtextEl.textContent = `正在生成現代化 CSS 樣式、配色與 RWD 響應排版... (${elapsed}s)`;
+            } else if (elapsed < 50) {
+              subtextEl.textContent = `正在編寫 Vanilla JS 原生互動邏輯與動效... (${elapsed}s)`;
+            } else {
+              subtextEl.textContent = `大型工程代碼組裝優化中，即將完成... (${elapsed}s)`;
+            }
+          }
+        }, 1000);
+      } else {
+        if (subtextEl) {
+          subtextEl.textContent = '正在設計版面佈局、編寫互動邏輯與美化樣式';
+        }
+      }
     }
 
     // 插入外部 CDN 函式庫
