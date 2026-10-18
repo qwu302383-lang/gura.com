@@ -883,7 +883,7 @@ button { cursor: pointer; }
   display: none;
 }
 .sidebar-backdrop {
-  display: none !important;
+  display: none;
 }
 .mobile-sidebar-close-btn {
   display: none;
@@ -1092,8 +1092,9 @@ button { cursor: pointer; }
     transform: translateX(0);
   }
 
+  /* 側邊欄遮罩：預設隱藏，僅在側邊欄開啟時 (body.sidebar-open-locked) 顯示 */
   .sidebar-backdrop {
-    display: block !important;
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -1103,6 +1104,11 @@ button { cursor: pointer; }
     backdrop-filter: blur(2px);
     z-index: 1250;
     animation: modalFadeIn 0.2s ease;
+  }
+
+  body.sidebar-open-locked .sidebar-backdrop,
+  .sidebar.mobile-open ~ .sidebar-backdrop {
+    display: block !important;
   }
 
   .mobile-sidebar-close-btn {
