@@ -573,14 +573,28 @@ window.addEventListener('load', () => {
 function getSessions() {
   try {
     const raw = localStorage.getItem(SESSIONS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [];
+    const filtered = list.filter(
+      (s) => s && s.id !== 'sess_engineering_records_v1' &&
+             !(s.title && (s.title.includes('專案工程紀錄表') || s.title.includes('工程紀錄表') || s.title.includes('前後端完整')))
+    );
+    if (filtered.length !== list.length) {
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(filtered));
+    }
+    return filtered;
   } catch (e) {
     return [];
   }
 }
 
 function saveSessions(sessions) {
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+  const filtered = Array.isArray(sessions) ? sessions.filter(
+    (s) => s && s.id !== 'sess_engineering_records_v1' &&
+           !(s.title && (s.title.includes('專案工程紀錄表') || s.title.includes('工程紀錄表') || s.title.includes('前後端完整')))
+  ) : [];
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify(filtered));
 }
 
 function formatHistoryTime(timestamp) {
@@ -619,6 +633,7 @@ function appendMessageToCurrentSession(role, text, siteUrl, siteTitle) {
     sessions.unshift(session);
     if (sessionTitle) sessionTitle.textContent = session.title;
     if (sessionLabel) sessionLabel.textContent = 'CONVERSATION';
+  if (newChatButton) newChatButton.classList.remove('active');
   }
 
   const msgObj = { role, text, timestamp: Date.now() };
@@ -751,6 +766,13 @@ function renderHistoryList(customQuery) {
   filtered.forEach(({ session, matchedSnippet }) => {
     const item = document.createElement('div');
     item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
+    if (newChatButton) {
+      if (currentSessionId) {
+        newChatButton.classList.remove('active');
+      } else {
+        newChatButton.classList.add('active');
+      }
+    }
     item.dataset.id = session.id;
 
     const displayTitle = query ? highlightSearchMatch(session.title, rawQuery) : escapeHtml(session.title);
@@ -872,6 +894,7 @@ function startNewSession(skipCollabCheck = false) {
   `;
   if (sessionTitle) sessionTitle.textContent = '歡迎使用gura';
   if (sessionLabel) sessionLabel.textContent = 'NEW SESSION';
+  if (newChatButton) newChatButton.classList.add('active');
   renderHistoryList();
   if (input) input.focus();
 }
@@ -1828,13 +1851,13 @@ if (input) {
   });
 }
 
-// 初始化
+// 初始化：啟動時過濾紀錄並直接開啟全新對話
 purgeEngineeringRecordsIfNeed();
 updateAuthUI();
 updateAutoSpeakUI();
 updateWebSearchUI();
 updateWebBuilderUI();
-renderHistoryList();
+startNewSession(true);
 
 // 語音輸入按鈕監聽
 if (voiceInputBtn) {
@@ -5223,16 +5246,11 @@ function initWebBuilder() {
   return window.webBuilderController || webBuilderController;
 }
 
-// 頁面載入完成後統一初始化提問日曆、網頁工坊與預設會話
+// 頁面載入完成後統一初始化提問日曆、網頁工坊；每次進入首頁均直接開始新對話
 function initAppFull() {
   initQuestionCalendar();
   initWebBuilder();
-  if (!currentSessionId) {
-    const sessions = getSessions();
-    if (sessions.length > 0) {
-      loadSession(sessions[0].id);
-    }
-  }
+  startNewSession(true);
 }
 
 if (document.readyState === 'loading') {
